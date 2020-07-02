@@ -62,9 +62,6 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
     if (connections) {
       for (const id of Object.keys(connections)) {
         let connection: IConnection = Object.assign({}, connections[id]);
-        if (connection.hasPassword || !connection.hasOwnProperty('hasPassword')) {
-          connection.password = await Global.keytar.getPassword(Constants.ExtensionId, id);
-        }
         ConnectionNodes.push(new ConnectionNode(id, connection));
       }
     }

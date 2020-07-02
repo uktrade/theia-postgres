@@ -73,9 +73,10 @@ export class EditorState {
 
         if (connFound) {
           connection = Object.assign({}, connections[k]);
-          if (connection.hasPassword || !connection.hasOwnProperty('hasPassword')) {
-            connection.password = await Global.keytar.getPassword(Constants.ExtensionId, k);
-          }
+          // if (connection.hasPassword || !connection.hasOwnProperty('hasPassword')) {
+          //   connection.password = await Global.keytar.getPassword(Constants.ExtensionId, k);
+          // }
+          connection.password = 'password';
           break;
         }
       }

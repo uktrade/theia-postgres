@@ -36,26 +36,6 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
     return element.getChildren();
   }
 
-  // private async getConnectionNodes(): Promise<ConnectionNode[]> {
-  //   const connections = this.context.globalState.get<{[key: string]: IConnection}>(Constants.GlobalStatePostgresSQLConectionsKey);
-  //   const ConnectionNodes = [];
-  //   if (connections) {
-  //     for (const id of Object.keys(connections)) {
-  //       const password = await Global.keytar.getPassword(Constants.ExtensionId, id);
-  //       ConnectionNodes.push(new ConnectionNode(id, connections[id].host, connections[id].user, password, connections[id].port, connections[id].certPath));
-  //       if (!Global.activeConnection) {
-  //         Global.activeConnection = {
-  //           host: connections[id].host,
-  //           user: connections[id].user,
-  //           password,
-  //           port: connections[id].port,
-  //           certPath: connections[id].certPath
-  //         };
-  //       }
-  //     }
-  //   }
-  //   return ConnectionNodes;
-  // }
   private async getConnectionNodes(): Promise<INode[]> {
     const connections = this.context.globalState.get<{[key: string]: IConnection}>(Constants.GlobalStateKey);
     const ConnectionNodes = [];

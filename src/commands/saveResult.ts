@@ -1,6 +1,5 @@
 import BaseCommand from "../common/baseCommand";
 import * as vscode from 'vscode';
-import * as EasyXml from 'easyxml';
 import * as csv from 'csv-stringify';
 import { SaveTableQuickPickItem } from "../common/IConnQuickPick";
 import { Global } from "../common/global";

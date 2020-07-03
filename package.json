@@ -325,7 +325,6 @@
   },
   "dependencies": {
     "csv-stringify": "^3.1.1",
-    "easyxml": "^2.0.1",
     "pg": "^7.4.3",
     "uuid": "^3.3.2",
     "vscode-languageclient": "^4.4.2",

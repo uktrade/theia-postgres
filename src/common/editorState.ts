@@ -76,7 +76,6 @@ export class EditorState {
           // if (connection.hasPassword || !connection.hasOwnProperty('hasPassword')) {
           //   connection.password = await Global.keytar.getPassword(Constants.ExtensionId, k);
           // }
-          connection.password = 'password';
           break;
         }
       }

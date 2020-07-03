@@ -55,12 +55,6 @@ export class SchemaNode implements INode {
       ORDER BY name;`, [this.schemaName]);
 
       let childs = [];
-      if (configVirtFolders != null)
-      {
-        if (configVirtFolders.indexOf("functions") !== -1) {
-          childs.push(new FunctionFolderNode(this.connection, this.schemaName));
-        }
-      }
       // Append tables under virtual folders
       return childs.concat(res.rows.map<TableNode>(table => {
         return new TableNode(this.connection, table.name, table.is_table, table.schema);

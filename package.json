@@ -152,11 +152,6 @@
         "category": "PostgreSQL"
       },
       {
-        "command": "vscode-postgres.selectTop1000",
-        "title": "Select Top 1000",
-        "category": "PostgreSQL"
-      },
-      {
         "command": "vscode-postgres.runQuery",
         "title": "Run Query",
         "category": "PostgreSQL"
@@ -255,26 +250,6 @@
         {
           "command": "vscode-postgres.refresh",
           "when": "view == postgres && viewItem == vscode-postgres.tree.function-folder",
-          "group": "postgres@1"
-        },
-        {
-          "command": "vscode-postgres.newQuery",
-          "when": "view == postgres && viewItem == vscode-postgres.tree.connection",
-          "group": "postgres@1"
-        },
-        {
-          "command": "vscode-postgres.newQuery",
-          "when": "view == postgres && viewItem == vscode-postgres.tree.database",
-          "group": "postgres@1"
-        },
-        {
-          "command": "vscode-postgres.newQuery",
-          "when": "view == postgres && viewItem == vscode-postgres.tree.table",
-          "group": "postgres@1"
-        },
-        {
-          "command": "vscode-postgres.newQuery",
-          "when": "view == postgres && viewItem == vscode-postgres.tree.column",
           "group": "postgres@1"
         },
         {

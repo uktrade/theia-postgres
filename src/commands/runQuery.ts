@@ -1,8 +1,9 @@
 import BaseCommand from "../common/baseCommand";
 import * as vscode from 'vscode';
 import { IConnection } from "../common/IConnection";
-import { EditorState } from "../common/editorState";
 import { Database } from "../common/database";
+import { Constants } from "../common/constants";
+import { PostgreSQLTreeDataProvider } from '../tree/treeProvider';
 
 'use strict';
 
@@ -13,11 +14,9 @@ export class runQueryCommand extends BaseCommand {
       return;
     }
 
-    let connection = EditorState.connection;
-    if (!connection) {
-      vscode.window.showWarningMessage('No PostgreSQL Server or Database selected');
-      return;
-    }
+    const tree = PostgreSQLTreeDataProvider.getInstance();
+    const connections = tree.context.globalState.get<{ [key: string]: IConnection }>(Constants.GlobalStateKey);
+    const connection = connections[Object.keys(connections)[0]];
 
     let editor = vscode.window.activeTextEditor;
     let querySelection = null;

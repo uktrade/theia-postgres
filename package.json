@@ -135,6 +135,10 @@
       {
         "command": "vscode-postgres.newQuery",
         "title": "New Query",
+        "icon": {
+          "light": "resources/light/add.svg",
+          "dark": "resources/dark/add.svg"
+        },
         "category": "PostgreSQL"
       },
       {
@@ -175,11 +179,14 @@
           "group": "navigation"
         }
       ],
-      "commandPalette": [
+      "view/title": [
         {
-          "command": "vscode-postgres.runQuery",
-          "when": "editorLangId == postgres"
-        },
+          "command": "vscode-postgres.newQuery",
+          "when": "view == postgres",
+          "group": "navigation@1"
+        }
+      ],
+      "commandPalette": [
         {
           "command": "vscode-postgres.runQuery",
           "when": "editorLangId != postgres && editorHasSelection && !editorHasMultipleSelections"

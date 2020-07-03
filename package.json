@@ -113,15 +113,6 @@
     ],
     "commands": [
       {
-        "command": "vscode-postgres.addConnection",
-        "title": "Add Connection",
-        "icon": {
-          "light": "resources/light/add.svg",
-          "dark": "resources/dark/add.svg"
-        },
-        "category": "PostgreSQL"
-      },
-      {
         "command": "vscode-postgres.deleteConnection",
         "title": "Delete Connection",
         "category": "PostgreSQL"
@@ -182,13 +173,6 @@
           "command": "vscode-postgres.saveResult",
           "when": "vscodePostgresResultFocus",
           "group": "navigation"
-        }
-      ],
-      "view/title": [
-        {
-          "command": "vscode-postgres.addConnection",
-          "when": "view == postgres",
-          "group": "navigation@1"
         }
       ],
       "commandPalette": [

@@ -34,7 +34,7 @@ export class saveResultCommand extends BaseCommand {
       return;
     }
 
-    let formats = ['json', 'xml', 'csv'];
+    let formats = ['json', 'csv'];
     let selFormat = await vscode.window.showQuickPick(formats);
     if (!selFormat) return;
 
@@ -42,15 +42,6 @@ export class saveResultCommand extends BaseCommand {
     if (selFormat === 'json') {
       let data = transformResult(results[resultIndex]);
       fileData = JSON.stringify(data, null, 2);
-    } else if (selFormat === 'xml') {
-      var ser = new EasyXml({
-        singularize: true,
-        rootElement: 'results',
-        dateFormat: 'ISO',
-        manifest: true
-      });
-      let data = transformResult(results[resultIndex]);
-      fileData = ser.render(data);
     } else if (selFormat === 'csv') {
       let columns = {};
       results[resultIndex].fields.forEach(field => {

@@ -11,6 +11,10 @@ import { EditorState } from './common/editorState';
 import { ConfigFS } from './common/configFileSystem';
 import { ResultsManager } from './resultsview/resultsManager';
 
+import { IConnection } from "./common/IConnection";
+import { Constants } from "./common/constants";
+import * as uuidv1 from "uuid/v1";
+import { Database, PgClient } from "./common/database";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -56,6 +60,32 @@ export async function activate(context: vscode.ExtensionContext) {
   //   await EditorState.setNonActiveConnection(doc, null);
   //   EditorState.getInstance().onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
   // }
+
+  const tree = PostgreSQLTreeDataProvider.getInstance();
+  let connections = tree.context.globalState.get<{ [key: string]: IConnection }>(Constants.GlobalStateKey);
+  if (connections) return;
+
+  connections = {};
+  const credentials = process.env['DATABASE_DSN__datasets_1'];
+  const user = credentials.match(/user=([a-z0-9_]+)/)[1];
+  const password = credentials.match(/password=([a-zA-Z0-9_]+)/)[1];
+  const port = parseInt(credentials.match(/port=(\d+)/)[1]);
+  const dbname = credentials.match(/dbname=([a-z0-9_\-]+)/)[1];
+  const host = credentials.match(/host=([a-z0-9_\-\.]+)/)[1];
+
+  const id = uuidv1();
+  connections[id] = {
+    label: 'datasets',
+    host: host,
+    user: user,
+    port: port,
+    ssl: true,
+    database: dbname,
+    password: password
+  };
+
+  await tree.context.globalState.update(Constants.GlobalStateKey, connections);
+  tree.refresh();
 }
 
 // this method is called when your extension is deactivated

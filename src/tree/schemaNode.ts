@@ -6,7 +6,6 @@ import { Database } from "../common/database";
 import { TableNode } from "./tableNode";
 import { InfoNode } from "./infoNode";
 import { Global } from '../common/global';
-import { FunctionFolderNode } from './funcFolderNode';
 
 export class SchemaNode implements INode {
 

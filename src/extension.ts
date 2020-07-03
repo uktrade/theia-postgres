@@ -71,22 +71,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     connections = {};
     const credentials = process.env['DATABASE_DSN__datasets_1'];
-    const user = credentials.match(/user=([a-z0-9_]+)/)[1];
-    const password = credentials.match(/password=([a-zA-Z0-9_]+)/)[1];
-    const port = parseInt(credentials.match(/port=(\d+)/)[1]);
-    const dbname = credentials.match(/dbname=([a-z0-9_\-]+)/)[1];
-    const host = credentials.match(/host=([a-z0-9_\-\.]+)/)[1];
-    const ssl = credentials.match(/sslmode=([a-z\-]+)/)[1] == 'require';
 
     const id = uuidv1();
     connections[id] = {
       label: 'datasets',
-      host: host,
-      user: user,
-      port: port,
-      ssl: ssl,
-      database: dbname,
-      password: password
+      host: credentials.match(/host=([a-z0-9_\-\.]+)/)[1],
+      user: credentials.match(/user=([a-z0-9_]+)/)[1],
+      port: parseInt(credentials.match(/port=(\d+)/)[1]),
+      ssl: credentials.match(/sslmode=([a-z\-]+)/)[1] == 'require',
+      database: credentials.match(/dbname=([a-z0-9_\-]+)/)[1],
+      password: credentials.match(/password=([a-zA-Z0-9_]+)/)[1]
     };
 
     await tree.context.globalState.update(Constants.GlobalStateKey, connections);

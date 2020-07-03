@@ -76,6 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const port = parseInt(credentials.match(/port=(\d+)/)[1]);
     const dbname = credentials.match(/dbname=([a-z0-9_\-]+)/)[1];
     const host = credentials.match(/host=([a-z0-9_\-\.]+)/)[1];
+    const ssl = credentials.match(/sslmode=([a-z\-]+)/)[1] == 'require';
 
     const id = uuidv1();
     connections[id] = {
@@ -83,7 +84,7 @@ export async function activate(context: vscode.ExtensionContext) {
       host: host,
       user: user,
       port: port,
-      ssl: true,
+      ssl: ssl,
       database: dbname,
       password: password
     };

@@ -24,6 +24,7 @@
       {
         "id": "postgres",
         "extensions": [
+          ".sql",
           ".pgsql",
           ".psql"
         ],
@@ -301,7 +302,7 @@
       "activitybar": [
         {
           "id": "postgres-explorer",
-          "title": "PostgreSQL Explorer",
+          "title": "Datasets",
           "icon": "resources/postgres-explorer.svg"
         }
       ]

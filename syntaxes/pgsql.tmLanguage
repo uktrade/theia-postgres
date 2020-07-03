@@ -4,6 +4,7 @@
 <dict>
 	<key>fileTypes</key>
 	<array>
+		<string>sql</string>
 		<string>pgsql</string>
 		<string>psql</string>
 	</array>

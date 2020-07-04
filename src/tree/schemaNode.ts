@@ -30,34 +30,29 @@ export class SchemaNode implements INode {
 
   public async getChildren(): Promise<INode[]> {
     const connection = await Database.createConnection(this.connection);
-    const configVirtFolders = Global.Configuration.get<Array<string>>("virtualFolders");
 
     try {
-      const res = await connection.query(`
-      SELECT
-          tablename as name,
-          true as is_table,
-          schemaname AS schema
-        FROM pg_tables
-        WHERE 
-          schemaname = $1
-          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
-      UNION ALL
-      SELECT
-          viewname as name,
-          false as is_table,
-          schemaname AS schema
-        FROM pg_views
-        WHERE 
-          schemaname = $1
-          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
-      ORDER BY name;`, [this.schemaName]);
-
-      let childs = [];
-      // Append tables under virtual folders
-      return childs.concat(res.rows.map<TableNode>(table => {
-        return new TableNode(this.connection, table.name, table.is_table, table.schema);
-      }));
+      return (await connection.query(`
+        SELECT
+            tablename as name,
+            true as is_table,
+            schemaname AS schema
+          FROM pg_tables
+          WHERE
+            schemaname = $1
+            AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+        UNION ALL
+        SELECT
+            viewname as name,
+            false as is_table,
+            schemaname AS schema
+          FROM pg_views
+          WHERE
+            schemaname = $1
+            AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+        ORDER BY name;`, [this.schemaName])).rows.map<TableNode>(table => {
+          return new TableNode(this.connection, table.name, table.is_table, table.schema);
+        });
     } catch(err) {
       return [new InfoNode(err)];
     } finally {

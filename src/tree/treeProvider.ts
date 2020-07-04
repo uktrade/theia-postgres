@@ -22,14 +22,11 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
     return element.getTreeItem();
   }
 
-  public getChildren(element?: INode): Promise<INode[]> | INode[] {
-    if (!element) {
-      return this.getSchemaNodes();
+  public async getChildren(element?: INode): Promise<INode[]> {
+    if (element) {
+      return element.getChildren();
     }
-    return element.getChildren();
-  }
 
-  private async getSchemaNodes(): Promise<INode[]> {
     const connection_postgres = await Database.createConnection(this.connection, 'postgres');
 
     try {

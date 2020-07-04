@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { INode } from "./INode";
-import { IConnection } from "../common/IConnection";
+import { IConnectionConfig } from "../common/IConnectionConfig";
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { Database } from '../common/database';
 import { InfoNode } from './infoNode';
@@ -11,7 +11,7 @@ import { SqlQueryManager } from '../queries';
 
 export class TableNode implements INode {
 
-  constructor(public readonly connection: IConnection
+  constructor(public readonly connectionConfig: IConnectionConfig
             , public readonly table: string
             , public readonly is_table: boolean
             , public readonly schema?: string)
@@ -36,7 +36,7 @@ export class TableNode implements INode {
   }
 
   public async getChildren(): Promise<INode[]> {
-    const connection = await Database.createConnection(this.connection);
+    const connection = await Database.createConnection(this.connectionConfig);
     //config.get<boolean>("prettyPrintJSONfields") ? `.jsonb-field, .json-field { white-space: pre; }` : ``;
     const configSort = Global.Configuration.get<string>("tableColumnSortOrder");
     const sortOptions = {
@@ -55,13 +55,13 @@ export class TableNode implements INode {
       // sorting is done via format - other fields through parameterized queries
       res = await connection.query(query.format(query.TableColumns, sortOptions[configSort]), [
         this.getQuotedTableName(),
-        this.connection.database,
+        this.connectionConfig.database,
         tableSchema,
         this.table
       ])
 
       return res.rows.map<ColumnNode>(column => {
-        return new ColumnNode(this.connection, this.table, column);
+        return new ColumnNode(column);
       });
     } catch(err) {
       return [new InfoNode(err)];

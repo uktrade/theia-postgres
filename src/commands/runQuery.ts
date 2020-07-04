@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { IConnection } from "../common/IConnection";
+import { IConnectionConfig } from "../common/IConnectionConfig";
 import { Database } from "../common/database";
 
-export function getRunCommand(connection: IConnection) {
+export function getRunCommand(connectionConfig: IConnectionConfig) {
   return async function run() {
     if (!vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document) {
       vscode.window.showWarningMessage('No SQL file selected');
@@ -35,6 +35,6 @@ export function getRunCommand(connection: IConnection) {
     }
 
     const sql = editor.document.getText(selectionToTrim);
-    return Database.runQuery(sql, editor, connection);
+    return Database.runQuery(sql, editor, connectionConfig);
   }
 }

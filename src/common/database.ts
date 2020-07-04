@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Pool, Client, types, ClientConfig } from 'pg';
-import { IConnection } from "./IConnection";
+import { IConnectionConfig } from "./IConnectionConfig";
 import { OutputChannel } from './outputChannel';
 
 export interface FieldInfo {
@@ -59,9 +59,9 @@ export class Database {
     return result + '"';
   }
 
-  public static async createConnection(connection: IConnection, dbname?: string): Promise<PgClient> {
-    const connectionOptions: any = Object.assign({}, connection);
-    connectionOptions.database = dbname ? dbname : connection.database;
+  public static async createConnection(connectionConfig: IConnectionConfig, dbname?: string): Promise<PgClient> {
+    const connectionOptions: any = Object.assign({}, connectionConfig);
+    connectionOptions.database = dbname ? dbname : connectionConfig.database;
     if (connectionOptions.certPath && fs.existsSync(connectionOptions.certPath)) {
       connectionOptions.ssl = {
         ca: fs.readFileSync(connectionOptions.certPath).toString()
@@ -81,14 +81,14 @@ export class Database {
     return client;
   }
 
-  public static async runQuery(sql: string, editor: vscode.TextEditor, connectionOptions: IConnection) {
+  public static async runQuery(sql: string, editor: vscode.TextEditor, connectionConfig: IConnectionConfig) {
     let uri = editor.document.uri.toString();
     let title = path.basename(editor.document.fileName);
     let resultsUri = vscode.Uri.parse('postgres-results://' + uri);
 
     let connection: PgClient = null;
     try {
-      connection = await Database.createConnection(connectionOptions);
+      connection = await Database.createConnection(connectionConfig);
       const typeNamesQuery = `select oid, format_type(oid, typtypmod) as display_type, typname from pg_type`;
       const types: TypeResults = await connection.query(typeNamesQuery);
       const res: QueryResults | QueryResults[] = await connection.query({ text: sql, rowMode: 'array' });

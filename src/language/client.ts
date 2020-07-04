@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { LanguageClient, ServerOptions, TransportKind, LanguageClientOptions } from 'vscode-languageclient';
 import { ExtensionContext } from 'vscode';
-import { IConnection } from '../common/IConnection';
+import { IConnectionConfig } from '../common/IConnectionConfig';
 
 export default class PostgreSQLLanguageClient {
 
@@ -29,8 +29,8 @@ export default class PostgreSQLLanguageClient {
     context.subscriptions.push(disposable);
   }
 
-  setConnection(connection: IConnection) {
+  setConnection(connectionConfig: IConnectionConfig) {
     if (!vscode.window.activeTextEditor) return;
-    this.client.sendRequest('set_connection', {connection, documentUri: vscode.window.activeTextEditor.document.uri.toString()});
+    this.client.sendRequest('set_connection', {connectionConfig, documentUri: vscode.window.activeTextEditor.document.uri.toString()});
   }
 }

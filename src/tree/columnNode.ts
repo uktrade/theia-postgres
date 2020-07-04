@@ -1,12 +1,11 @@
 import * as path from 'path';
 import { INode } from "./INode";
-import { IConnection } from "../common/IConnection";
 import { IColumn } from "./IColumn";
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
 
 export class ColumnNode implements INode {
   
-  constructor(private readonly connection: IConnection, private readonly tablename: string, private readonly column: IColumn) {}
+  constructor(private readonly column: IColumn) {}
 
   public async getChildren(): Promise<INode[]> { return []; }
   public getTreeItem(): TreeItem {

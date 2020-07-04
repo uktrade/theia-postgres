@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { IConnection } from "../common/IConnection";
 
 export function getNewQueryCommand() {
   return async function run(treeNode: any) {

@@ -6,7 +6,7 @@ import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
 import { Global } from './common/global';
 import { ResultsManager } from './resultsview/resultsManager';
 
-import { IConnection } from "./common/IConnection";
+import { IConnectionConfig } from "./common/IConnectionConfig";
 
 import { getNewQueryCommand } from './commands/newQuery';
 import { getRefreshCommand } from './commands/refresh';
@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(Global.ResultManager);
 
   const credentials = process.env['DATABASE_DSN__datasets_1'];
-  const connection: IConnection = {
+  const connectionConfig: IConnectionConfig = {
     label: 'datasets',
     host: credentials.match(/host=([a-z0-9_\-\.]+)/)[1],
     user: credentials.match(/user=([a-z0-9_]+)/)[1],
@@ -32,17 +32,17 @@ export async function activate(context: vscode.ExtensionContext) {
     password: credentials.match(/password=([a-zA-Z0-9_]+)/)[1]
   };
 
-  const tree = new PostgreSQLTreeDataProvider(connection);
+  const tree = new PostgreSQLTreeDataProvider(connectionConfig);
   context.subscriptions.push(vscode.window.registerTreeDataProvider('postgres', tree));
 
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.newQuery', getNewQueryCommand()));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.refresh', getRefreshCommand(tree)));
-  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.runQuery', getRunCommand(connection)));
+  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.runQuery', getRunCommand(connectionConfig)));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.saveResult', getSaveResultCommand()));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.selectTop', getSelectTopCommand()));
 
   vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor) => {
-    languageClient.setConnection(connection);
+    languageClient.setConnection(connectionConfig);
   });
 }
 

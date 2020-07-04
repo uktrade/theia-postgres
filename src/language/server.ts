@@ -8,7 +8,7 @@ import {
 import { Client, ClientConfig } from 'pg';
 import * as fs from 'fs';
 import { Validator } from './validator';
-import { IConnection as IDBConnection } from '../common/IConnection';
+import { IConnectionConfig } from '../common/IConnectionConfig';
 import { BackwardIterator } from '../common/backwordIterator';
 import { SqlQueryManager } from '../queries';
 
@@ -21,7 +21,7 @@ export class PgClient extends Client {
 }
 
 export interface ISetConnection { 
-  connection: IDBConnection
+  connectionConfig: IConnectionConfig;
   documentUri?: string;
 }
 
@@ -94,7 +94,7 @@ let databaseCache: string[] = [];
 
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
 let dbConnection: PgClient = null,
-    dbConnOptions: IDBConnection = null;
+    dbConnOptions: IConnectionConfig = null;
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -133,7 +133,7 @@ function dbConnectionEnded() {
   databaseCache = [];
 }
 
-async function setupDBConnection(connectionOptions: IDBConnection, uri: string): Promise<void> {
+async function setupDBConnection(connectionOptions: IConnectionConfig, uri: string): Promise<void> {
   if (connectionOptions) {
     dbConnection = new PgClient(connectionOptions);
     await dbConnection.connect();
@@ -154,7 +154,7 @@ async function setupDBConnection(connectionOptions: IDBConnection, uri: string):
   dbConnOptions = connectionOptions;
 }
 
-async function loadCompletionCache(connectionOptions: IDBConnection) {
+async function loadCompletionCache(connectionOptions: IConnectionConfig) {
   if (!connectionOptions || !dbConnection) return;
   // setup database caches for schemas, functions, tables, and fields
   let vQueries = SqlQueryManager.getVersionQueries(dbConnection.pg_version);
@@ -316,11 +316,11 @@ async function loadCompletionCache(connectionOptions: IDBConnection) {
 
 connection.onRequest('set_connection', async function() {
   let newConnection: ISetConnection = arguments[0];
-  if (!dbConnOptions && !newConnection.connection) {
+  if (!dbConnOptions && !newConnection.connectionConfig) {
     // neither has a connection - just exist
     return;
   }
-  if (dbConnOptions && newConnection.connection && newConnection.connection.host === dbConnOptions.host && newConnection.connection.database === dbConnOptions.database && newConnection.connection.port === dbConnOptions.port && newConnection.connection.user === dbConnOptions.user) {
+  if (dbConnOptions && newConnection.connectionConfig && newConnection.connectionConfig.host === dbConnOptions.host && newConnection.connectionConfig.database === dbConnOptions.database && newConnection.connectionConfig.port === dbConnOptions.port && newConnection.connectionConfig.user === dbConnOptions.user) {
     // same connection - just exit
     return;
   }
@@ -329,7 +329,7 @@ connection.onRequest('set_connection', async function() {
     // kill the connection first
     await dbConnection.end();
   }
-  setupDBConnection(newConnection.connection, newConnection.documentUri)
+  setupDBConnection(newConnection.connectionConfig, newConnection.documentUri)
   .catch(err => {
     console.log(err.message)
   });

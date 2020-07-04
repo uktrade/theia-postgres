@@ -1,4 +1,4 @@
-export interface IConnection {
+export interface IConnectionConfig {
   readonly label: string;
   readonly host: string;
   readonly user: string;

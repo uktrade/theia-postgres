@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { INode } from './INode';
 import { Constants } from '../common/constants';
 import { Global } from '../common/global';
-import { IConnection } from '../common/IConnection';
+import { IConnectionConfig } from '../common/IConnectionConfig';
 import { SchemaNode } from './schemaNode';
 import { Database } from '../common/database';
 
@@ -11,7 +11,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
   public _onDidChangeTreeData: vscode.EventEmitter<INode> = new vscode.EventEmitter<INode>();
   public readonly onDidChangeTreeData: vscode.Event<INode> = this._onDidChangeTreeData.event;
 
-  constructor(public connection: IConnection) {}
+  constructor(public connectionConfig: IConnectionConfig) {}
 
   public refresh(): void {
     this._onDidChangeTreeData.fire();
@@ -26,7 +26,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
       return element.getChildren();
     }
 
-    const connection_postgres = await Database.createConnection(this.connection, 'postgres');
+    const connection_postgres = await Database.createConnection(this.connectionConfig, 'postgres');
 
     try {
       var databases = (await connection_postgres.query(`
@@ -44,7 +44,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
     }
 
     if (!databases.length) return [];
-    const connection = await Database.createConnection(this.connection, databases[0]);
+    const connection = await Database.createConnection(this.connectionConfig, databases[0]);
 
     try {
       return (await connection.query(`
@@ -57,7 +57,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
           AND has_schema_privilege(oid, 'CREATE, USAGE')
         ORDER BY nspname;`
       )).rows.map<SchemaNode>(schema => {
-        return new SchemaNode(this.connection, schema.name);
+        return new SchemaNode(this.connectionConfig, schema.name);
       });
     } finally {
       await connection.end();

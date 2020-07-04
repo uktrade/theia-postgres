@@ -45,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
   };
 
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.newQuery', getNewQueryCommand()));
-  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.refresh', getRefreshCommand()));
+  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.refresh', getRefreshCommand(tree)));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.runQuery', getRunCommand(connections[id])));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.saveResult', getSaveResultCommand()));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.selectTop', getSelectTopCommand()));

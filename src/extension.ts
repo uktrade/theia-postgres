@@ -7,7 +7,6 @@ import * as path from 'path';
 import PostgreSQLLanguageClient from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
 import { Global } from './common/global';
-import { ConfigFS } from './common/configFileSystem';
 import { ResultsManager } from './resultsview/resultsManager';
 
 import { IConnection } from "./common/IConnection";
@@ -46,9 +45,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     Global.ResultManager = new ResultsManager();
     context.subscriptions.push(Global.ResultManager);
-
-    const configFS = new ConfigFS();
-    context.subscriptions.push(vscode.workspace.registerFileSystemProvider('postgres-config', configFS, {isCaseSensitive: true}));
 
     const tree = PostgreSQLTreeDataProvider.getInstance();
     let connections = tree.context.globalState.get<{ [key: string]: IConnection }>(Constants.GlobalStateKey);

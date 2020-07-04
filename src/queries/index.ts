@@ -1,5 +1,3 @@
-'use strict';
-
 export class SqlQueries {
   TableColumns: string;
   GetFunctions: string;

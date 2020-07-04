@@ -9,7 +9,6 @@ import { Global } from './common/global';
 import { ResultsManager } from './resultsview/resultsManager';
 
 import { IConnection } from "./common/IConnection";
-import { Constants } from "./common/constants";
 
 import { getNewQueryCommand } from './commands/newQuery';
 import { getRefreshCommand } from './commands/refresh';

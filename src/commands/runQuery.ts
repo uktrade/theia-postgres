@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { IConnectionConfig } from "../common/IConnectionConfig";
+import { Pool } from 'pg';
 import { Database } from "../common/database";
 
-export function getRunCommand(connectionConfig: IConnectionConfig) {
+export function getRunCommand(pool: Pool) {
   return async function run() {
     if (!vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document) {
       vscode.window.showWarningMessage('No SQL file selected');
@@ -35,6 +35,6 @@ export function getRunCommand(connectionConfig: IConnectionConfig) {
     }
 
     const sql = editor.document.getText(selectionToTrim);
-    return Database.runQuery(sql, editor, connectionConfig);
+    return Database.runQuery(sql, editor, pool);
   }
 }

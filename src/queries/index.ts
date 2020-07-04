@@ -1,23 +1,5 @@
 export class SqlQueries {
-  GetFunctions: string;
-  GetAllFunctions: string;
-
-  public format(stringValue: string, ...formatParams: any[]): string {
-    return stringValue.replace(/{(\d+)}/g, (match: string, number: string): string => {
-      let num = parseInt(number);
-      if (typeof formatParams[num] === 'undefined') {
-        throw new Error(`Index ${number} not found in the argument list`);
-      }
-      if (formatParams[num] === null) return '';
-      return formatParams[num].toString();
-    });
-  }
-}
-
-let queries = {
-  0: <SqlQueries> {
-    GetFunctions:
-      `SELECT n.nspname as "schema",
+  GetFunctions: `SELECT n.nspname as "schema",
         p.proname as "name",
         d.description,
         pg_catalog.pg_get_function_result(p.oid) as "result_type",
@@ -35,9 +17,8 @@ let queries = {
         AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
         AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
         AND has_function_privilege(p.oid, 'execute') = true
-      ORDER BY 1, 2, 4;`,
-    GetAllFunctions:
-      `SELECT n.nspname as "schema",
+      ORDER BY 1, 2, 4;`;
+  GetAllFunctions: `SELECT n.nspname as "schema",
         p.proname as "name",
         d.description,
         pg_catalog.pg_get_function_result(p.oid) as "result_type",
@@ -56,29 +37,22 @@ let queries = {
         AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
         AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
         AND has_function_privilege(p.oid, 'execute') = true
-      ORDER BY 1, 2, 4;`
+      ORDER BY 1, 2, 4;`;
+
+  public format(stringValue: string, ...formatParams: any[]): string {
+    return stringValue.replace(/{(\d+)}/g, (match: string, number: string): string => {
+      let num = parseInt(number);
+      if (typeof formatParams[num] === 'undefined') {
+        throw new Error(`Index ${number} not found in the argument list`);
+      }
+      if (formatParams[num] === null) return '';
+      return formatParams[num].toString();
+    });
   }
 }
 
 export class SqlQueryManager {
-
-  static getVersionQueries(versionNumber: number): SqlQueries {
-    let versionKeys = Object.keys(queries).map(k => parseInt(k));
-    versionKeys.sort((a, b) => a - b);
-
-    let queryResult = new SqlQueries();
-    for (let version of versionKeys) {
-      if (version > versionNumber)
-        break;
-      
-      let queryKeys = Object.keys(queries[version]);
-      for (let queryKey of queryKeys) {
-        if (queries[version][queryKey]) {
-          queryResult[queryKey] = queries[version][queryKey];
-        }
-      }
-    }
-    return queryResult;
+  static getVersionQueries(): SqlQueries {
+    return new SqlQueries();
   }
-
 }

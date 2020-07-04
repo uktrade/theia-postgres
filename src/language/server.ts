@@ -157,7 +157,7 @@ async function setupDBConnection(connectionOptions: IConnectionConfig, uri: stri
 async function loadCompletionCache(connectionOptions: IConnectionConfig) {
   if (!connectionOptions || !dbConnection) return;
   // setup database caches for schemas, functions, tables, and fields
-  let vQueries = SqlQueryManager.getVersionQueries(dbConnection.pg_version);
+  let vQueries = SqlQueryManager.getVersionQueries();
   try {
     if (connectionOptions.database) {
       let schemas = await dbConnection.query(`

@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { INode } from "./INode";
-import { IConnectionConfig } from "../common/IConnectionConfig";
+import { Pool, Client } from 'pg';
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { Database } from '../common/database';
 import { InfoNode } from './infoNode';
@@ -11,17 +11,11 @@ import { SqlQueryManager } from '../queries';
 
 export class TableNode implements INode {
 
-  constructor(public readonly connectionConfig: IConnectionConfig
+  constructor(public readonly pool: Pool
             , public readonly table: string
             , public readonly is_table: boolean
             , public readonly schema: string)
   {}
-
-  public getQuotedTableName(): string {
-    let quotedSchema = this.schema && this.schema !== 'public' ? Database.getQuotedIdent(this.schema) : null;
-    let quotedTable = Database.getQuotedIdent(this.table);
-    return quotedSchema ? `${quotedSchema}.${quotedTable}` : quotedTable;
-  }
 
   public getTreeItem(): TreeItem {
     return {
@@ -73,9 +67,8 @@ export class TableNode implements INode {
               ccu.constraint_name = tc.constraint_name
             )
           WHERE
-            kcu.table_catalog = $2 AND
-            kcu.table_schema = $3 AND
-            kcu.table_name = $4 AND
+            kcu.table_schema = $2 AND
+            kcu.table_name = $3 AND
             tc.constraint_type = 'FOREIGN KEY'
         ) as fk ON fk.column_name = a.attname
       WHERE
@@ -85,11 +78,9 @@ export class TableNode implements INode {
         has_column_privilege($1, a.attname, 'SELECT, INSERT, UPDATE, REFERENCES')
       ORDER BY a.attnum;`
 
-    const connection = await Database.createConnection(this.connectionConfig);
     try {
-      return (await connection.query(sql, [
-        connection.escapeIdentifier(this.schema) + '.' + connection.escapeIdentifier(this.table),
-        this.connectionConfig.database,
+      return (await this.pool.query(sql, [
+        Client.prototype.escapeIdentifier(this.schema) + '.' + Client.prototype.escapeIdentifier(this.table),
         this.schema,
         this.table
       ])).rows.map<ColumnNode>(column => {
@@ -97,8 +88,6 @@ export class TableNode implements INode {
       });
     } catch(err) {
       return [new InfoNode(err)];
-    } finally {
-      await connection.end();
     }
   }
 }

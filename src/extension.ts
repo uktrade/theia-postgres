@@ -25,7 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(Global.ResultManager);
 
   const credentials = process.env['DATABASE_DSN__datasets_1'];
-  const connection = {
+  const connection: IConnection = {
     label: 'datasets',
     host: credentials.match(/host=([a-z0-9_\-\.]+)/)[1],
     user: credentials.match(/user=([a-z0-9_]+)/)[1],

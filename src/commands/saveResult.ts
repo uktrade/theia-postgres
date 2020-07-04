@@ -1,8 +1,12 @@
 import * as vscode from 'vscode';
+import { QuickPickItem } from "vscode";
 import * as csv from 'csv-stringify';
-import { SaveTableQuickPickItem } from "../common/IConnQuickPick";
 import { Global } from "../common/global";
 import { QueryResults } from "../common/database";
+
+interface SaveTableQuickPickItem extends QuickPickItem {
+  readonly index: number;
+}
 
 export function getSaveResultCommand() {
   return async function run(uri: vscode.Uri) {

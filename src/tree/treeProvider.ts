@@ -10,7 +10,6 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
 
   public _onDidChangeTreeData: vscode.EventEmitter<INode> = new vscode.EventEmitter<INode>();
   public readonly onDidChangeTreeData: vscode.Event<INode> = this._onDidChangeTreeData.event;
-  private static _instance: PostgreSQLTreeDataProvider = null;
 
   constructor(public connection: IConnection) {}
 

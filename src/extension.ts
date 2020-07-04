@@ -7,6 +7,7 @@ import { Global } from './common/global';
 import { ResultsManager } from './resultsview/resultsManager';
 
 import { IConnectionConfig } from "./common/IConnectionConfig";
+import { Pool,  ClientConfig } from 'pg';
 
 import { getNewQueryCommand } from './commands/newQuery';
 import { getRefreshCommand } from './commands/refresh';

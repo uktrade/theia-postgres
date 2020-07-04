@@ -36,31 +36,63 @@ export class TableNode implements INode {
   }
 
   public async getChildren(): Promise<INode[]> {
+    const sql = `SELECT
+        a.attname as column_name,
+        format_type(a.atttypid, a.atttypmod) as data_type,
+        coalesce(primaryIndex.indisprimary, false) as primary_key,
+        CASE
+          WHEN fk.constraint_name IS NULL THEN NULL
+          ELSE json_build_object(
+            'constraint', fk.constraint_name,
+            'catalog', fk.fk_catalog,
+            'schema', fk.fk_schema,
+            'table', fk.fk_table,
+            'column', fk.fk_column
+          )
+        END as foreign_key
+      FROM
+        pg_attribute a
+        LEFT JOIN pg_index primaryIndex ON primaryIndex.indrelid = a.attrelid AND a.attnum = ANY(primaryIndex.indkey) AND primaryIndex.indisprimary = true
+        LEFT JOIN (
+          SELECT tc.constraint_name, kcu.column_name,
+            ccu.table_catalog as fk_catalog,
+            ccu.table_schema as fk_schema,
+            ccu.table_name as fk_table,
+            ccu.column_name as fk_column
+          FROM
+            information_schema.key_column_usage kcu
+            INNER JOIN information_schema.table_constraints tc ON (
+              tc.constraint_name = kcu.constraint_name AND
+              tc.table_catalog = kcu.table_catalog AND
+              tc.table_schema = kcu.table_schema AND
+              tc.table_name = kcu.table_name
+            )
+            INNER JOIN information_schema.constraint_column_usage ccu ON (
+              ccu.constraint_catalog = tc.constraint_catalog AND
+              ccu.constraint_schema = tc.constraint_schema AND
+              ccu.constraint_name = tc.constraint_name
+            )
+          WHERE
+            kcu.table_catalog = $2 AND
+            kcu.table_schema = $3 AND
+            kcu.table_name = $4 AND
+            tc.constraint_type = 'FOREIGN KEY'
+        ) as fk ON fk.column_name = a.attname
+      WHERE
+        a.attrelid = $1::regclass AND
+        a.attnum > 0 AND
+        NOT a.attisdropped AND
+        has_column_privilege($1, a.attname, 'SELECT, INSERT, UPDATE, REFERENCES')
+      ORDER BY a.attnum;`
+
     const connection = await Database.createConnection(this.connectionConfig);
-    //config.get<boolean>("prettyPrintJSONfields") ? `.jsonb-field, .json-field { white-space: pre; }` : ``;
-    const configSort = Global.Configuration.get<string>("tableColumnSortOrder");
-    const sortOptions = {
-      "db-order": 'a.attnum',
-      "alpha": 'a.attname',
-      "reverse-alpha": 'a.attname DESC'
-    };
-    if (!sortOptions[configSort]) sortOptions[configSort] = 'a.attnum';
-
-    let tableSchema = this.schema ? this.schema : 'public';
-    let query = SqlQueryManager.getVersionQueries(connection.pg_version);
-    
     try {
-      let res: QueryResult = null;
-
-      // sorting is done via format - other fields through parameterized queries
-      res = await connection.query(query.format(query.TableColumns, sortOptions[configSort]), [
-        this.getQuotedTableName(),
+      return (await connection.query(sql, [
+        connection.escapeIdentifier(this.schema) + '.' + connection.escapeIdentifier(this.table),
         this.connectionConfig.database,
-        tableSchema,
+        this.schema,
         this.table
-      ])
-
-      return res.rows.map<ColumnNode>(column => {
+      ])).rows.map<ColumnNode>(column => {
         return new ColumnNode(column);
       });
     } catch(err) {

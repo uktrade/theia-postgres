@@ -62,11 +62,6 @@ export class Database {
   public static async createConnection(connectionConfig: IConnectionConfig, dbname?: string): Promise<PgClient> {
     const connectionOptions: any = Object.assign({}, connectionConfig);
     connectionOptions.database = dbname ? dbname : connectionConfig.database;
-    if (connectionOptions.certPath && fs.existsSync(connectionOptions.certPath)) {
-      connectionOptions.ssl = {
-        ca: fs.readFileSync(connectionOptions.certPath).toString()
-      }
-    }
 
     let client = new PgClient(connectionOptions);
     await client.connect();

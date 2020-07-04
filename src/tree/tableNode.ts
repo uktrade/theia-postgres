@@ -14,7 +14,7 @@ export class TableNode implements INode {
   constructor(public readonly connectionConfig: IConnectionConfig
             , public readonly table: string
             , public readonly is_table: boolean
-            , public readonly schema?: string)
+            , public readonly schema: string)
   {}
 
   public getQuotedTableName(): string {

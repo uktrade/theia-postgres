@@ -40,7 +40,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
         return database.datname;
       });
     } finally {
-      connection_postgres.end()
+      await connection_postgres.end()
     }
 
     if (!databases.length) return [];
@@ -60,7 +60,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
         return new SchemaNode(this.connection, schema.name);
       });
     } finally {
-      connection.end();
+      await connection.end();
     }
   }
 }

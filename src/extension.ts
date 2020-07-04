@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import PostgreSQLLanguageClient from './language/client';
+import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
 import { Global } from './common/global';
 import { ResultsManager } from './resultsview/resultsManager';
@@ -16,7 +16,6 @@ import { getSaveResultCommand } from './commands/saveResult';
 import { getSelectTopCommand } from './commands/selectTop';
 
 export async function activate(context: vscode.ExtensionContext) {
-  let languageClient: PostgreSQLLanguageClient = new PostgreSQLLanguageClient(context);
   Global.context = context;
 
   Global.ResultManager = new ResultsManager();
@@ -43,9 +42,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.saveResult', getSaveResultCommand()));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.selectTop', getSelectTopCommand()));
 
-  vscode.window.onDidChangeActiveTextEditor((e: vscode.TextEditor) => {
-    languageClient.setConnection(connectionConfig);
-  });
+  await setupPostgresLanguageClient(context, connectionConfig);
 }
 
 export function deactivate() {

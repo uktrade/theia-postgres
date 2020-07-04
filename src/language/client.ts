@@ -4,33 +4,24 @@ import { LanguageClient, ServerOptions, TransportKind, LanguageClientOptions } f
 import { ExtensionContext } from 'vscode';
 import { IConnectionConfig } from '../common/IConnectionConfig';
 
-export default class PostgreSQLLanguageClient {
+export async function setupPostgresLanguageClient(context: ExtensionContext, connectionConfig: IConnectionConfig) {
+  const serverModule = context.asAbsolutePath(path.join('out', 'language', 'server.js'));
+  const debugOptions = { execArgv: ['--nolazy', '--debug=6005', '--inspect'] };
 
-  public client: LanguageClient;
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
+  };
 
-  constructor(context: ExtensionContext) {
-    let serverModule = context.asAbsolutePath(path.join('out', 'language', 'server.js'));
-    let debugOptions = { execArgv: ['--nolazy', '--debug=6005', '--inspect'] };
+  const clientOptions: LanguageClientOptions = {
+    documentSelector: [
+      { language: 'postgres', scheme: 'file' },
+      { language: 'postgres', scheme: 'untitled' }
+    ]
+  };
 
-    let serverOptions: ServerOptions = {
-      run: { module: serverModule, transport: TransportKind.ipc },
-      debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
-    };
-
-    let clientOptions: LanguageClientOptions = {
-      documentSelector: [
-        { language: 'postgres', scheme: 'file' },
-        { language: 'postgres', scheme: 'untitled' }
-      ]
-    };
-
-    this.client = new LanguageClient('postgres', 'PostgreSQL Service', serverOptions, clientOptions);
-    let disposable = this.client.start();
-    context.subscriptions.push(disposable);
-  }
-
-  setConnection(connectionConfig: IConnectionConfig) {
-    if (!vscode.window.activeTextEditor) return;
-    this.client.sendRequest('set_connection', {connectionConfig});
-  }
+  const client = new LanguageClient('postgres', 'PostgreSQL Service', serverOptions, clientOptions);
+  context.subscriptions.push(client.start());
+  await client.onReady();
+  client.sendRequest('set_connection', {connectionConfig});
 }

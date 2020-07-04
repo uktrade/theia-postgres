@@ -1,12 +1,11 @@
-import BaseCommand from "../common/baseCommand";
 import * as vscode from 'vscode';
 import * as csv from 'csv-stringify';
 import { SaveTableQuickPickItem } from "../common/IConnQuickPick";
 import { Global } from "../common/global";
 import { QueryResults } from "../common/database";
 
-export class saveResultCommand extends BaseCommand {
-  async run(uri: vscode.Uri) {
+export function getSaveResultCommand() {
+  return async function run(uri: vscode.Uri) {
     let results = Global.ResultManager.activeWinResults;
     if (!results) {
       vscode.window.showWarningMessage('Unable to save data - dataset not found');

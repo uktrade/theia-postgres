@@ -1,11 +1,10 @@
-import BaseCommand from "../common/baseCommand";
 import * as vscode from 'vscode';
 import { PostgreSQLTreeDataProvider } from "../tree/treeProvider";
 import { TableNode } from "../tree/tableNode";
 import { Database } from "../common/database";
 
-export class selectTopCommand extends BaseCommand {
-  async run(treeNode: TableNode) {
+export function getSelectTopCommand() {
+  return async function run(treeNode: TableNode) {
     // prompt for count
     const countInput: string = await vscode.window.showInputBox({ prompt: "Select how many?", placeHolder: "limit" });
     if (!countInput) return;

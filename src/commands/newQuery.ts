@@ -1,12 +1,9 @@
 import * as fs from 'fs';
-import BaseCommand from "../common/baseCommand";
 import * as vscode from 'vscode';
 import { IConnection } from "../common/IConnection";
 
-'use strict';
-
-export class newQueryCommand extends BaseCommand {
-  async run(treeNode: any) {
+export function getNewQueryCommand() {
+  return async function run(treeNode: any) {
     // Probably a bit of a race condition if multiple calls at the same time
     // but the user would have to be very quick
     var index = 1;

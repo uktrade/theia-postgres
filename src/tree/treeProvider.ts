@@ -13,8 +13,8 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
 
   constructor(public connection: IConnection) {}
 
-  public refresh(element?: INode): void {
-    this._onDidChangeTreeData.fire(element);
+  public refresh(): void {
+    this._onDidChangeTreeData.fire();
   }
 
   public getTreeItem(element: INode): Promise<vscode.TreeItem> | vscode.TreeItem {

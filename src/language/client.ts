@@ -31,6 +31,6 @@ export default class PostgreSQLLanguageClient {
 
   setConnection(connectionConfig: IConnectionConfig) {
     if (!vscode.window.activeTextEditor) return;
-    this.client.sendRequest('set_connection', {connectionConfig, documentUri: vscode.window.activeTextEditor.document.uri.toString()});
+    this.client.sendRequest('set_connection', {connectionConfig});
   }
 }

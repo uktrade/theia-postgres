@@ -133,7 +133,7 @@ function dbConnectionEnded() {
   databaseCache = [];
 }
 
-async function setupDBConnection(connectionOptions: IConnectionConfig, uri: string): Promise<void> {
+async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<void> {
   if (connectionOptions) {
     dbConnection = new PgClient(connectionOptions);
     await dbConnection.connect();
@@ -143,13 +143,6 @@ async function setupDBConnection(connectionOptions: IConnectionConfig, uri: stri
     dbConnection.on('end', dbConnectionEnded);
 
     loadCompletionCache(connectionOptions);
-
-    if (uri) {
-      let document = documents.get(uri);
-      if (document && document.languageId === 'postgres') {
-        validateTextDocument(document);
-      }
-    }
   }
   dbConnOptions = connectionOptions;
 }
@@ -329,7 +322,7 @@ connection.onRequest('set_connection', async function() {
     // kill the connection first
     await dbConnection.end();
   }
-  setupDBConnection(newConnection.connectionConfig, newConnection.documentUri)
+  setupDBConnection(newConnection.connectionConfig)
   .catch(err => {
     console.log(err.message)
   });

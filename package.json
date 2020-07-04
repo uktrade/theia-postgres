@@ -298,7 +298,6 @@
     "@types/mocha": "^2.2.42",
     "@types/node": "^14.0.14",
     "@types/pg": "^7.4.10",
-    "@types/uuid": "^3.4.4",
     "ts-loader": "^4.5.0",
     "typescript": "^2.9.2",
     "vscode": "^1.1.30",
@@ -308,7 +307,6 @@
   "dependencies": {
     "csv-stringify": "^3.1.1",
     "pg": "^7.4.3",
-    "uuid": "^3.3.2",
     "vscode-languageclient": "^4.4.2",
     "vscode-languageserver": "^4.4.2"
   }

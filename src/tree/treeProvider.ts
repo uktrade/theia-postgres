@@ -12,16 +12,8 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
   public readonly onDidChangeTreeData: vscode.Event<INode> = this._onDidChangeTreeData.event;
   private static _instance: PostgreSQLTreeDataProvider = null;
 
-  constructor(public context: vscode.ExtensionContext){ this.refresh(); }
+  constructor(public connection: IConnection) {}
 
-  public static getInstance(context?: vscode.ExtensionContext): PostgreSQLTreeDataProvider {
-    if (context && !this._instance) {
-      this._instance = new PostgreSQLTreeDataProvider(context);
-      context.subscriptions.push(vscode.window.registerTreeDataProvider("postgres", this._instance));
-    }
-    return this._instance;
-  }
-  
   public refresh(element?: INode): void {
     this._onDidChangeTreeData.fire(element);
   }
@@ -38,15 +30,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
   }
 
   private async getSchemaNodes(): Promise<INode[]> {
-    const connections = this.context.globalState.get<{[key: string]: IConnection}>(Constants.GlobalStateKey);
-    if (!connections) return [];
-
-    // We only support one connection, and one database on that connection
-    const ConnectionNodes = [];
-    const id = Object.keys(connections)[0];
-
-    const connection_obj: IConnection = Object.assign({}, connections[id]);
-    const connection_postgres = await Database.createConnection(connection_obj, 'postgres');
+    const connection_postgres = await Database.createConnection(this.connection, 'postgres');
 
     try {
       var databases = (await connection_postgres.query(`
@@ -64,7 +48,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
     }
 
     if (!databases.length) return [];
-    const connection = await Database.createConnection(connection_obj, databases[0]);
+    const connection = await Database.createConnection(this.connection, databases[0]);
 
     try {
       return (await connection.query(`
@@ -77,7 +61,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
           AND has_schema_privilege(oid, 'CREATE, USAGE')
         ORDER BY nspname;`
       )).rows.map<SchemaNode>(schema => {
-        return new SchemaNode(connection_obj, schema.name);
+        return new SchemaNode(this.connection, schema.name);
       });
     } finally {
       connection.end();

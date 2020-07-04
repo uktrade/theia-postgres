@@ -59,20 +59,6 @@ export class Database {
     return result + '"';
   }
 
-  static getConnectionWithDB(connection: IConnection, dbname?: string): IConnection {
-    if (!dbname) return connection;
-    return {
-      label: connection.label,
-      host: connection.host,
-      user: connection.user,
-      password: connection.password,
-      port: connection.port,
-      database: dbname,
-      multipleStatements: connection.multipleStatements,
-      certPath: connection.certPath
-    };
-  }
-
   public static async createConnection(connection: IConnection, dbname?: string): Promise<PgClient> {
     const connectionOptions: any = Object.assign({}, connection);
     connectionOptions.database = dbname ? dbname : connection.database;

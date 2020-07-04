@@ -135,27 +135,6 @@ function dbConnectionEnded() {
 
 async function setupDBConnection(connectionOptions: IDBConnection, uri: string): Promise<void> {
   if (connectionOptions) {
-    // dbConnection = await Database.createConnection(conn);
-    if (connectionOptions.certPath && fs.existsSync(connectionOptions.certPath)) {
-      connectionOptions.ssl = {
-        ca: fs.readFileSync(connectionOptions.certPath).toString()
-      }
-    }
-
-    if (!connectionOptions.database) {
-      connectionOptions = {
-        label: connectionOptions.label, 
-        host: connectionOptions.host,
-        user: connectionOptions.user,
-        password: connectionOptions.password,
-        port: connectionOptions.port,
-        database: 'postgres',
-        multipleStatements: connectionOptions.multipleStatements,
-        certPath: connectionOptions.certPath,
-        ssl: connectionOptions.ssl
-      };
-    }
-    
     dbConnection = new PgClient(connectionOptions);
     await dbConnection.connect();
     const versionRes = await dbConnection.query(`SELECT current_setting('server_version_num') as ver_num;`);

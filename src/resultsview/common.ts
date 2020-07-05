@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 import { QueryResults, FieldInfo } from '../common/database';
 
 export function generateResultsHtml(resultsBody) {
-  const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
+  const nonce = randomBytes(16).toString('base64');
   return `<!DOCTYPE html>
   <html>
     <head>

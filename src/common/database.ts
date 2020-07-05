@@ -1,38 +1,24 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { Pool, Client, types, ClientConfig } from 'pg';
+import { Pool, Client, QueryResult, FieldDef, types, ClientConfig } from 'pg';
 import { generateResultsHtml, getResultsBody } from '../resultsview/common';
 
-export interface FieldInfo {
-  columnID: number;
-  dataTypeID: number;
-  dataTypeModifier: number;
-  dataTypeSize: number;
-  format: string;
-  name: string;
-  tableID: number;
-  display_type?: string;
+export interface FieldInfo extends FieldDef {
+  display_type: string;
 };
 
-export interface QueryResults {
-  rowCount: number;
-  command: string;
-  rows?: any[];
-  fields?: FieldInfo[];
-  message?: string;
+export interface QueryResults extends QueryResult {
+  fields: FieldInfo[];
 };
 
 export interface TypeResult {
   oid: number;
   typname: string;
-  display_type?: string;
+  display_type: string;
 };
 
-export interface TypeResults {
-  rowCount: number;
-  command: string;
-  rows?: TypeResult[];
-  fields?: FieldInfo[];
+export interface TypeResults extends QueryResult {
+  rows: TypeResult[];
 }
 
 export function getRunQueryAndDisplayResults(onChangeActive) {
@@ -43,21 +29,24 @@ export function getRunQueryAndDisplayResults(onChangeActive) {
 
     try {
       var types: TypeResults = await pool.query(typeNamesQuery);
-      var res: QueryResults | QueryResults[] = await pool.query({text: sql, rowMode: 'array'});
+      var res: QueryResult | QueryResult[] = await pool.query({text: sql, rowMode: 'array'});
     } catch (err) {
       vscode.window.showErrorMessage(err.message);
       return;
     }
 
-    const results: QueryResults[] = Array.isArray(res) ? res : [res];
-    results.forEach((result) => {
-      result.fields.forEach((field) => {
-        let type = types.rows.find((t) => t.oid === field.dataTypeID);
-        if (type) {
-          field.format = type.typname;
-          field.display_type = type.display_type;
-        }
-      });
+    const rawResults: QueryResult[] = Array.isArray(res) ? res : [res];
+    const results: QueryResults[] = rawResults.map((result) => {
+      return {
+        ...result,
+        fields: result.fields.map((field) => {
+          const type = types.rows.find((t) => t.oid === field.dataTypeID);
+          return {
+            ...field,
+            display_type: type.display_type
+          };
+        })
+      };
     });
 
     const viewColumn = ((vscode.window.activeTextEditor && vscode.window.activeTextEditor.viewColumn) || vscode.ViewColumn.One) + 1;

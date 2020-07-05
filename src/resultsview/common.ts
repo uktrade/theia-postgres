@@ -97,7 +97,6 @@ export function getResultsBody(results: QueryResults[]): string {
     if (!first)
       html += '<hr class="result-divider" />'
     switch (result.command) {
-      case 'ext-message': html += generateMessage(result); break;
       case 'INSERT': html += generateInsertResults(result); break;
       case 'UPDATE': html += generateUpdateResults(result); break;
       case 'CREATE': html += generateCreateResults(result); break;
@@ -149,10 +148,6 @@ function generateExplainResult(result: QueryResults): string {
 
 function generateGenericResult(result: QueryResults): string {
   return `<pre class="vscode-postgres-result vscode-postgres-result-generic">${JSON.stringify(result)}</pre>`;
-}
-
-function generateMessage(result: QueryResults): string {
-  return `<pre class="vscode-postgres-result vscode-postgres-result-message">${result.message}</pre>`;
 }
 
 function generateSelectResult(result: QueryResults): string {

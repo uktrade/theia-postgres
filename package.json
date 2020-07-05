@@ -100,7 +100,11 @@
       {
         "command": "vscode-postgres.selectTop",
         "title": "Select Top...",
-        "category": "PostgreSQL"
+        "category": "PostgreSQL",
+        "icon": {
+          "light": "./resources/light/add.svg",
+          "dark": "./resources/dark/add.svg"
+        }
       },
       {
         "command": "vscode-postgres.runQuery",
@@ -160,9 +164,9 @@
       ],
       "view/item/context": [
         {
-          "command": "vscode-postgres.refresh",
-          "when": "view == postgres && viewItem == vscode-postgres.tree.connection",
-          "group": "postgres@1"
+          "command": "vscode-postgres.selectTop",
+          "when": "view == postgres && viewItem == vscode-postgres.tree.table",
+          "group": "inline"
         },
         {
           "command": "vscode-postgres.refresh",

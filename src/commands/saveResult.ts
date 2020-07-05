@@ -35,7 +35,7 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
       return;
     }
 
-    let formats = ['json', 'csv'];
+    let formats = ['csv', 'json'];
     let selFormat = await vscode.window.showQuickPick(formats);
     if (!selFormat) return;
 

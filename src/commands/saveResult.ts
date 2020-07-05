@@ -39,17 +39,16 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
     let selFormat = await vscode.window.showQuickPick(formats);
     if (!selFormat) return;
 
-    let fileData: string = null;
+    let fileData: string;
     if (selFormat === 'json') {
       let data = transformResult(results[resultIndex]);
       fileData = JSON.stringify(data, null, 2);
     } else if (selFormat === 'csv') {
-      let columns = {};
+      let columns: any = {};
       results[resultIndex].fields.forEach(field => {
         columns[field.name] = field.name
       });
 
-      let csvError: any = false;
       fileData = await new Promise<string>((resolve) => {
         csv(results[resultIndex].rows, {
           header: true,
@@ -60,7 +59,7 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
             }
           }
         }, (err, output: string) => {
-          if (err) { csvError = err; resolve(''); return;}
+          if (err) { resolve(''); return;}
           resolve(output);
         });
       });

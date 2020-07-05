@@ -15,10 +15,10 @@
     read-pkg "4.0.1"
     yargs "12.0.1"
 
-"@theia/plugin@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@theia/plugin/-/plugin-1.2.0.tgz#c17b9fc70ca13ca55b0158c45aae9365055eb0fe"
-  integrity sha512-pIGoyPyYM6pk6913MItZqACR4wdRc2UOaT3cCSWPlvh2dev/ncOqwifc8gurlzp2k078qwC/YT+r0IEFrwfusw==
+"@theia/plugin@latest":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@theia/plugin/-/plugin-1.3.0.tgz#90e5161efbd612f0509bd180c3a5314a4f6d3513"
+  integrity sha512-VQFgpB6/pWrZvztZq4RN5Hy+lG52+sKEwBH4ceQIE5uoOrj2XzrFGTNZLK57Vde5J3YeyQOqNRLYOT52btzagg==
 
 "@tootallnate/once@1":
   version "1.1.2"

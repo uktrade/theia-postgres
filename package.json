@@ -223,7 +223,7 @@
     "@types/mocha": "^2.2.42",
     "@types/node": "^14.0.14",
     "@types/pg": "^7.4.10",
-    "@theia/plugin": "1.2.0",
+    "@theia/plugin": "latest",
     "@theia/plugin-packager": "latest",
     "rimraf": "2.6.2",
     "typescript": "^3.9.6",

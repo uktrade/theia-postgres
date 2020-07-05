@@ -1,6 +1,7 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { Pool } from 'pg';
-import { Database } from "../common/database";
+import { runQueryAndDisplayResults } from "../common/database";
 
 export function getRunCommand(pool: Pool) {
   return async function run() {
@@ -35,6 +36,8 @@ export function getRunCommand(pool: Pool) {
     }
 
     const sql = editor.document.getText(selectionToTrim);
-    return Database.runQuery(sql, editor, pool);
+    const title = path.basename(editor.document.fileName);
+    const uri = editor.document.uri.toString();
+    return runQueryAndDisplayResults(sql, pool, uri, title);
   }
 }

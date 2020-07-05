@@ -4,7 +4,6 @@ import { Constants } from '../common/constants';
 import { Global } from '../common/global';
 import { Pool } from 'pg';
 import { SchemaNode } from './schemaNode';
-import { Database } from '../common/database';
 
 export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode> {
 

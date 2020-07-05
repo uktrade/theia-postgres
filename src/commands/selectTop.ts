@@ -1,7 +1,8 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { PostgreSQLTreeDataProvider } from "../tree/treeProvider";
 import { TableNode } from "../tree/tableNode";
-import { Database } from "../common/database";
+import { runQueryAndDisplayResults } from "../common/database";
 import { Client } from 'pg';
 
 
@@ -21,7 +22,9 @@ export function getSelectTopCommand() {
     const quoted = `${quotedSchema}.${quotedTable}`;
     const sql = `SELECT * FROM ${quoted} LIMIT ${count};`
     const textDocument = await vscode.workspace.openTextDocument({content: sql, language: 'postgres'});
+    const title = path.basename(textDocument.fileName);
+    const uri = textDocument.uri.toString();
     await vscode.window.showTextDocument(textDocument);
-    return Database.runQuery(sql, vscode.window.activeTextEditor, treeNode.pool);
+    return runQueryAndDisplayResults(sql, treeNode.pool, uri, title);
   }
 }

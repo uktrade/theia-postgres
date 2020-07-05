@@ -2,7 +2,6 @@ import * as path from 'path';
 import { INode } from "./INode";
 import { Pool, Client } from 'pg';
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
-import { Database } from '../common/database';
 import { InfoNode } from './infoNode';
 import { ColumnNode } from './columnNode';
 import { Global } from '../common/global';

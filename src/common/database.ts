@@ -26,7 +26,7 @@ export function getRunQueryAndDisplayResults(onChangeActive) {
 
     try {
       var types: TypeResults = await pool.query(typeNamesQuery);
-      var res: QueryResult | QueryResult[] = await pool.query({text: sql, rowMode: 'array'});
+      var res: QueryResult | QueryResult[] = await pool.query({ text: sql, rowMode: 'array' });
     } catch (err) {
       vscode.window.showErrorMessage(err.message);
       return;
@@ -57,7 +57,7 @@ export function getRunQueryAndDisplayResults(onChangeActive) {
     );
 
     var isActive = false;
-    panel.onDidChangeViewState(({webviewPanel}) => {
+    panel.onDidChangeViewState(({ webviewPanel }) => {
       var changed = webviewPanel.active !== isActive;
       isActive = webviewPanel.active;
       if (changed) onChangeActive(webviewPanel.active, results);

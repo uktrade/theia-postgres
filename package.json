@@ -9,8 +9,11 @@
     "type": "git",
     "url": "https://github.com/Borvik/vscode-postgres.git"
   },
+  "keywords": [
+    "theia-plugin"
+  ],
   "engines": {
-    "vscode": "^1.26.0"
+    "theiaPlugin": "next"
   },
   "categories": [
     "Other"
@@ -18,7 +21,12 @@
   "activationEvents": [
     "*"
   ],
-  "main": "./out/extension",
+  "files": [
+    "src"
+  ],
+  "theiaPlugin": {
+    "backend": "lib/extension.js"   
+  },
   "contributes": {
     "languages": [
       {
@@ -202,13 +210,12 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run build-preview && npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "npm run build-preview-dev && tsc -watch -p ./",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "npm run compile && node ./node_modules/vscode/bin/test",
-    "build-preview-dev": "npx webpack --mode development",
-    "build-preview": "echo 'none'"
+    "prepare": "yarn run clean && yarn run build",
+    "clean": "rimraf lib",
+    "format-code": "tsfmt -r",
+    "watch": "tsc -watch",
+    "compile": "tsc",
+    "build": "yarn run format-code && yarn run compile && theia-plugin pack"
   },
   "devDependencies": {
     "@types/csv-stringify": "^1.4.2",
@@ -216,11 +223,12 @@
     "@types/mocha": "^2.2.42",
     "@types/node": "^14.0.14",
     "@types/pg": "^7.4.10",
-    "ts-loader": "^4.5.0",
+    "@theia/plugin": "1.2.0",
+    "@theia/plugin-packager": "latest",
+    "rimraf": "2.6.2",
     "typescript": "^3.9.6",
-    "vscode": "^1.1.30",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.3.12"
+    "typescript-formatter": "7.2.2",
+    "vscode": "^1.1.30"
   },
   "dependencies": {
     "csv-stringify": "^3.1.1",

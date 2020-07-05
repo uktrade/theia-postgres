@@ -19,7 +19,7 @@ export function getSelectTopCommand(runQueryAndDisplayResults) {
     const quotedTable = Client.prototype.escapeIdentifier(treeNode.table);
     const quoted = `${quotedSchema}.${quotedTable}`;
     const sql = `SELECT * FROM ${quoted} LIMIT ${count};`
-    const textDocument = await vscode.workspace.openTextDocument({content: sql, language: 'postgres'});
+    const textDocument = await vscode.workspace.openTextDocument({ content: sql, language: 'postgres' });
 
     const title = path.basename(textDocument.fileName);
     await vscode.window.showTextDocument(textDocument);

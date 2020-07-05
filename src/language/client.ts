@@ -5,7 +5,7 @@ import { ExtensionContext } from 'vscode';
 import { IConnectionConfig } from '../common/IConnectionConfig';
 
 export async function setupPostgresLanguageClient(context: ExtensionContext, connectionConfig: IConnectionConfig) {
-  const serverModule = context.asAbsolutePath(path.join('out', 'language', 'server.js'));
+  const serverModule = context.asAbsolutePath(path.join('lib', 'language', 'server.js'));
   const debugOptions = { execArgv: ['--nolazy', '--debug=6005', '--inspect'] };
 
   const serverOptions: ServerOptions = {
@@ -23,5 +23,5 @@ export async function setupPostgresLanguageClient(context: ExtensionContext, con
   const client = new LanguageClient('postgres', 'PostgreSQL Service', serverOptions, clientOptions);
   context.subscriptions.push(client.start());
   await client.onReady();
-  client.sendRequest('set_connection', {connectionConfig});
+  client.sendRequest('set_connection', { connectionConfig });
 }

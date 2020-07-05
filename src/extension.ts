@@ -1,3 +1,4 @@
+import * as theia from '@theia/plugin';
 import * as vscode from 'vscode';
 import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
@@ -13,7 +14,7 @@ import { getRunCommand } from './commands/runQuery';
 import { getSaveResultCommand } from './commands/saveResult';
 import { getSelectTopCommand } from './commands/selectTop';
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function start(context: theia.PluginContext) {
   const credentials = process.env['DATABASE_DSN__datasets_1']!;
   const connectionConfig: IConnectionConfig = {
     label: 'datasets',
@@ -59,5 +60,5 @@ export async function activate(context: vscode.ExtensionContext) {
   await setupPostgresLanguageClient(context, connectionConfig);
 }
 
-export function deactivate() {
+export function stop() {
 }

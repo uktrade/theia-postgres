@@ -19,7 +19,7 @@ export class PgClient extends Client {
   }
 }
 
-export interface ISetConnection { 
+export interface ISetConnection {
   connectionConfig: IConnectionConfig;
   documentUri?: string;
 }
@@ -93,7 +93,7 @@ let databaseCache: string[] = [];
 
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
 let dbConnection: PgClient = null,
-    dbConnOptions: IConnectionConfig = null;
+  dbConnOptions: IConnectionConfig = null;
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -103,7 +103,7 @@ documents.listen(connection);
 
 let shouldSendDiagnosticRelatedInformation: boolean = false;
 
-connection.onInitialize((_params) : InitializeResult => {
+connection.onInitialize((_params): InitializeResult => {
   shouldSendDiagnosticRelatedInformation = _params.capabilities && _params.capabilities.textDocument && _params.capabilities.textDocument.publishDiagnostics && _params.capabilities.textDocument.publishDiagnostics.relatedInformation;
   return {
     capabilities: {
@@ -256,8 +256,8 @@ async function loadCompletionCache(connectionOptions: IConnectionConfig) {
         AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
         AND has_function_privilege(p.oid, 'execute') = true
       ORDER BY 1, 2, 4;`);
-    
-    functions.rows.forEach((fn:DBFunctionsRaw) => {
+
+    functions.rows.forEach((fn: DBFunctionsRaw) => {
       // return new ColumnNode(this.connection, this.table, column);
       let existing = functionCache.find(f => f.name === fn.name);
       if (!existing) {
@@ -271,7 +271,7 @@ async function loadCompletionCache(connectionOptions: IConnectionConfig) {
         functionCache.push(existing);
       }
       let args = fn.argument_types.split(',').filter(a => a).map<string>(a => a.trim());
-      existing.overloads.push({args, description: fn.description});
+      existing.overloads.push({ args, description: fn.description });
     });
   }
   catch (err) {
@@ -317,9 +317,9 @@ connection.onRequest('set_connection', async function() {
     await dbConnection.end();
   }
   setupDBConnection(newConnection.connectionConfig)
-  .catch(err => {
-    console.log(err.message)
-  });
+    .catch(err => {
+      console.log(err.message)
+    });
 });
 
 /*
@@ -343,7 +343,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
   if (dbConnection) {
     let sqlText = textDocument.getText();
     if (!sqlText) {
-      connection.sendDiagnostics({uri: textDocument.uri, diagnostics});
+      connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
       return;
     }
     for (let sql of Validator.prepare_sql(sqlText)) {
@@ -366,7 +366,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       try {
         const results = await dbConnection.query(`EXPLAIN ${sql.statement}`);
       }
-      catch(err) {
+      catch (err) {
         // can use err.position (string)
         // corresponds to full position in query "EXPLAIN ${sql.statement}"
         // need to parse out where in parsed statement and lines that it is
@@ -392,7 +392,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
           severity: DiagnosticSeverity.Error,
           range: {
             start: { line: sql.line + errLine, character: errPosition },
-            end: {line: sql.line + errLine, character: spacePos }
+            end: { line: sql.line + errLine, character: spacePos }
           },
           message: err.message,
           source: dbConnOptions.host
@@ -400,7 +400,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
       }
     }
   }
-  connection.sendDiagnostics({uri: textDocument.uri, diagnostics});
+  connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 
 /*
@@ -421,7 +421,7 @@ connection.onCompletion((e: any): CompletionItem[] => {
   if (!document) return items;
 
   let iterator = new BackwardIterator(document, e.position.character - 1, e.position.line);
-  
+
   // // look back and grab the text immediately prior to match to table
   // let line = document.getText({
   //   start: {line: e.position.line, character: 0},
@@ -500,7 +500,7 @@ connection.onCompletion((e: any): CompletionItem[] => {
 
     let table = tableCache.find(tbl => {
       return tbl.schemaname == schema.name
-            && (idents[pos].isQuoted && tbl.tablename === idents[pos].name) || (!idents[pos].isQuoted && tbl.tablename.toLocaleLowerCase() == idents[pos].name.toLocaleLowerCase());
+        && (idents[pos].isQuoted && tbl.tablename === idents[pos].name) || (!idents[pos].isQuoted && tbl.tablename.toLocaleLowerCase() == idents[pos].name.toLocaleLowerCase());
     });
 
     if (table) {
@@ -598,7 +598,7 @@ connection.onSignatureHelp((positionParams): SignatureHelp => {
       signatures.push({
         label: `${fn.name}( ${overload.args.join(' , ')} )`,
         documentation: overload.description,
-        parameters: overload.args.map<ParameterInformation>(v => { return {label: v}})
+        parameters: overload.args.map<ParameterInformation>(v => { return { label: v } })
       });
     });
 

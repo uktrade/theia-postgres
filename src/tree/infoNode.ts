@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { INode } from './INode';
 
 export class InfoNode implements INode {
-  constructor(private readonly label: string) {}
+  constructor(private readonly label: string) { }
 
   public getTreeItem(): vscode.TreeItem {
     return {
@@ -11,8 +11,8 @@ export class InfoNode implements INode {
       collapsibleState: vscode.TreeItemCollapsibleState.None,
       contextValue: 'vscode-postgres.tree.error',
       iconPath: {
-        light: path.join(__dirname, '../../resources/light/error.svg'),
-        dark: path.join(__dirname, '../../resources/dark/error.svg')
+        light: '/hostedPlugin/ckolkman_vscode_postgres/resources/light/error.svg',
+        dark: '/hostedPlugin/ckolkman_vscode_postgres/resources/dark/error.svg'
       }
     };
   }

@@ -7,16 +7,16 @@ import { InfoNode } from "./infoNode";
 
 export class SchemaNode implements INode {
 
-  constructor(private readonly pool: Pool, private readonly schemaName: string) {}
-  
+  constructor(private readonly pool: Pool, private readonly schemaName: string) { }
+
   public getTreeItem(): vscode.TreeItem {
     return {
       label: this.schemaName,
       collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
       contextValue: 'vscode-postgres.tree.schema',
       iconPath: {
-        light: path.join(__dirname, '../../resources/light/schema.svg'),
-        dark: path.join(__dirname, '../../resources/dark/schema.svg')
+        light: '/hostedPlugin/ckolkman_vscode_postgres/resources/light/schema.svg',
+        dark: '/hostedPlugin/ckolkman_vscode_postgres/resources/dark/schema.svg'
       }
     };
   }
@@ -42,9 +42,9 @@ export class SchemaNode implements INode {
             schemaname = $1
             AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
         ORDER BY name;`, [this.schemaName])).rows.map<TableNode>(table => {
-          return new TableNode(this.pool, table.name, table.is_table, table.schema);
-        });
-    } catch(err) {
+        return new TableNode(this.pool, table.name, table.is_table, table.schema);
+      });
+    } catch (err) {
       return [new InfoNode(err)];
     }
   }

@@ -23,7 +23,7 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
           index: i - 1
         });
       }
-      
+
       let selected = await vscode.window.showQuickPick(tables);
       if (!selected) return;
       resultIndex = selected.index;
@@ -53,25 +53,25 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
           header: true,
           columns: columns,
           formatters: {
-            bool: (value: boolean):string => {
+            bool: (value: boolean): string => {
               return value ? 'true' : 'false';
             }
           }
         }, (err, output: string) => {
-          if (err) { resolve(''); return;}
+          if (err) { resolve(''); return; }
           resolve(output);
         });
       });
     }
 
     try {
-      let doc: vscode.TextDocument = await vscode.workspace.openTextDocument({language: selFormat});
+      let doc: vscode.TextDocument = await vscode.workspace.openTextDocument({ language: selFormat });
       let editor: vscode.TextEditor = await vscode.window.showTextDocument(doc, 1, false);
       let result = await editor.edit(edit => edit.insert(new vscode.Position(0, 0), fileData));
       if (!result)
         vscode.window.showErrorMessage('Error occurred opening content in editor');
     }
-    catch(err) {
+    catch (err) {
       vscode.window.showErrorMessage(err);
     }
   }

@@ -4,8 +4,8 @@ import { INode } from "./INode";
 import { IColumn } from "./IColumn";
 
 export class ColumnNode implements INode {
-  
-  constructor(private readonly column: IColumn) {}
+
+  constructor(private readonly column: IColumn) { }
 
   public async getChildren(): Promise<INode[]> { return []; }
   public getTreeItem(): vscode.TreeItem {
@@ -26,10 +26,9 @@ export class ColumnNode implements INode {
       collapsibleState: vscode.TreeItemCollapsibleState.None,
       contextValue: 'vscode-postgres.tree.column',
       iconPath: {
-        light: path.join(__dirname, `../../resources/light/${icon}.svg`),
-        dark: path.join(__dirname, `../../resources/dark/${icon}.svg`)
+        light: `/hostedPlugin/ckolkman_vscode_postgres/resources/light/${icon}.svg`,
+        dark: `/hostedPlugin/ckolkman_vscode_postgres/resources/dark/${icon}.svg`
       }
     };
   }
-
 }

@@ -1,3 +1,4 @@
+import * as theia from 'path';
 import * as path from 'path';
 import { INode } from "./INode";
 import { Pool, Client } from 'pg';
@@ -7,11 +8,11 @@ import { ColumnNode } from './columnNode';
 
 export class TableNode implements INode {
 
-  constructor(public readonly pool: Pool
-            , public readonly table: string
-            , public readonly is_table: boolean
-            , public readonly schema: string)
-  {}
+  constructor(
+    public readonly pool: Pool,
+    public readonly table: string,
+    public readonly is_table: boolean,
+    public readonly schema: string) { }
 
   public getTreeItem(): TreeItem {
     return {
@@ -19,8 +20,8 @@ export class TableNode implements INode {
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: 'vscode-postgres.tree.table',
       iconPath: {
-        light: path.join(__dirname, `../../resources/light/${this.is_table ? 'table' : 'view'}.svg`),
-        dark: path.join(__dirname, `../../resources/dark/${this.is_table ? 'table' : 'view'}.svg`)
+        light: `/hostedPlugin/ckolkman_vscode_postgres/resources/light/${this.is_table ? 'table' : 'view'}.svg`,
+        dark: `/hostedPlugin/ckolkman_vscode_postgres/resources/dark/${this.is_table ? 'table' : 'view'}.svg`,
       }
     };
   }
@@ -82,7 +83,7 @@ export class TableNode implements INode {
       ])).rows.map<ColumnNode>(column => {
         return new ColumnNode(column);
       });
-    } catch(err) {
+    } catch (err) {
       return [new InfoNode(err)];
     }
   }

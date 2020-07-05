@@ -143,7 +143,7 @@ export class BackwardIterator {
       }
       if (!identStarted && (ch === _WSB || ch === _TAB || ch == _NL))
         continue;
-      
+
       if (!identStarted && (ch === _DQuote || this.isIdentPart(ch))) {
         identStarted = true;
         isQuotedIdentifier = (ch === _DQuote);
@@ -169,9 +169,9 @@ export class BackwardIterator {
       if (!ident) {
         break;
       }
-    
+
       idents.push(ident)
-  
+
       if (!this.isNextPeriod()) {
         break;
       }

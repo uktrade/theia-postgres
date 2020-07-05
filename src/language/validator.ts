@@ -14,7 +14,7 @@ export class Validator {
    *  - Starting Column
    */
 
-  public static* prepare_sql(sql: string): IterableIterator<ISqlDetails> {
+  public static * prepare_sql(sql: string): IterableIterator<ISqlDetails> {
     let lines = sql.split(/\r?\n/),
       startLine = 0,
       startColumn = 0,
@@ -73,19 +73,19 @@ export class Validator {
       };
     }
     //   let response = results.join("\n");
-  //   if (in_statement && !in_block_comment) {
-  //     if (in_line_comment)
-  //       response += "\n";
-  //     response += ';';
-  //   }
-  //   return response;
+    //   if (in_statement && !in_block_comment) {
+    //     if (in_line_comment)
+    //       response += "\n";
+    //     response += ';';
+    //   }
+    //   return response;
   }
 
   // public static preparer_sql(sql) {
   //   let in_statement = false,
   //       in_line_comment = false,
   //       in_block_comment = false;
-    
+
   //   let results: string[] = [];
   //   for (let data of Validator.split_sql(sql)) {
   //     let precontents = null, start_str = null;
@@ -110,7 +110,7 @@ export class Validator {
 
   //     if (!in_line_comment && !in_block_comment && in_statement && data.end === ';')
   //       in_statement = false;
-      
+
   //     if (in_block_comment && data.end === '*/')
   //       in_block_comment = false;
 
@@ -126,7 +126,7 @@ export class Validator {
   //   return response;
   // }
 
-  public static* split_sql(sql: string) {
+  public static * split_sql(sql: string) {
     let bookends = [";", '"', '""', "'", "''", "--", "/*", "*/"];
     let last_bookend_found = null;
     let start = 0;
@@ -164,7 +164,7 @@ export class Validator {
       if (firstChars.indexOf(haystack[offset]) >= 0) {
         let possible_needle = firstCharMap[haystack[offset]];
         if (haystack.substr(offset, possible_needle.length) === possible_needle)
-          return {end: offset, bookend: possible_needle};
+          return { end: offset, bookend: possible_needle };
       }
       offset++;
     }

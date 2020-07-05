@@ -20,7 +20,7 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
       let tables: SaveTableQuickPickItem[] = [];
       for (let i = 1; i <= results.length; i++) {
         tables.push({
-          label: 'Table ' + i,
+          label: 'Table ' + i.toString(),
           index: i - 1
         });
       }

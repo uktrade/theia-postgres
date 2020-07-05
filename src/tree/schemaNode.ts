@@ -4,7 +4,6 @@ import { INode } from "./INode";
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { TableNode } from "./tableNode";
 import { InfoNode } from "./infoNode";
-import { Global } from '../common/global';
 
 export class SchemaNode implements INode {
 

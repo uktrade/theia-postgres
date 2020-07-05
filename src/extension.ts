@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
-import { Global } from './common/global';
 import { generateResultsHtml } from './resultsview/common';
 import { getRunQueryAndDisplayResults, QueryResults } from './common/database';
 
@@ -17,8 +16,6 @@ import { getSaveResultCommand } from './commands/saveResult';
 import { getSelectTopCommand } from './commands/selectTop';
 
 export async function activate(context: vscode.ExtensionContext) {
-  Global.context = context;
-
   const credentials = process.env['DATABASE_DSN__datasets_1'];
   const connectionConfig: IConnectionConfig = {
     label: 'datasets',

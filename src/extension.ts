@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
 import { generateResultsHtml } from './resultsview/common';
@@ -16,15 +14,15 @@ import { getSaveResultCommand } from './commands/saveResult';
 import { getSelectTopCommand } from './commands/selectTop';
 
 export async function activate(context: vscode.ExtensionContext) {
-  const credentials = process.env['DATABASE_DSN__datasets_1'];
+  const credentials = process.env['DATABASE_DSN__datasets_1']!;
   const connectionConfig: IConnectionConfig = {
     label: 'datasets',
-    host: credentials.match(/host=([a-z0-9_\-\.]+)/)[1],
-    user: credentials.match(/user=([a-z0-9_]+)/)[1],
-    port: parseInt(credentials.match(/port=(\d+)/)[1]),
-    ssl: credentials.match(/sslmode=([a-z\-]+)/)[1] == 'require',
-    database: credentials.match(/dbname=([a-z0-9_\-]+)/)[1],
-    password: credentials.match(/password=([a-zA-Z0-9_]+)/)[1]
+    host: credentials.match(/host=([a-z0-9_\-\.]+)/)![1],
+    user: credentials.match(/user=([a-z0-9_]+)/)![1],
+    port: parseInt(credentials.match(/port=(\d+)/)![1]),
+    ssl: credentials.match(/sslmode=([a-z\-]+)/)![1] == 'require',
+    database: credentials.match(/dbname=([a-z0-9_\-]+)/)![1],
+    password: credentials.match(/password=([a-zA-Z0-9_]+)/)![1]
   };
   const pool = new Pool(connectionConfig);
 
@@ -34,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // The "save" button that appears with results is a bit faffy to maintain due to the order
   // that multiple panels fire their change events when tabbling between.
   var numActive: number = 0;
-  var activeResults: QueryResults[] | null = null;
+  var activeResults: QueryResults[];
   function onChangeActive(isActive: boolean, results: QueryResults[]) {
     numActive = numActive + (isActive ? 1 : -1);
     if (isActive) {

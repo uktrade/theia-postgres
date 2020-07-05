@@ -10,7 +10,6 @@ import * as fs from 'fs';
 import { Validator } from './validator';
 import { IConnectionConfig } from '../common/IConnectionConfig';
 import { BackwardIterator } from '../common/backwordIterator';
-import { SqlQueryManager } from '../queries';
 
 export class PgClient extends Client {
   pg_version: number;
@@ -150,7 +149,6 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
 async function loadCompletionCache(connectionOptions: IConnectionConfig) {
   if (!connectionOptions || !dbConnection) return;
   // setup database caches for schemas, functions, tables, and fields
-  let vQueries = SqlQueryManager.getVersionQueries();
   try {
     if (connectionOptions.database) {
       let schemas = await dbConnection.query(`
@@ -238,30 +236,26 @@ async function loadCompletionCache(connectionOptions: IConnectionConfig) {
   }
 
   try {
-    // let functions = await dbConnection.query(`
-    //   SELECT n.nspname as "schema",
-    //     p.proname as "name",
-    //     d.description,
-    //     pg_catalog.pg_get_function_result(p.oid) as "result_type",
-    //     pg_catalog.pg_get_function_arguments(p.oid) as "argument_types",
-    //   CASE
-    //     WHEN p.proisagg THEN 'agg'
-    //     WHEN p.proiswindow THEN 'window'
-    //     WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN 'trigger'
-    //     ELSE 'normal'
-    //   END as "type"
-    //   FROM pg_catalog.pg_proc p
-    //       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
-    //       LEFT JOIN pg_catalog.pg_description d ON p.oid = d.objoid
-    //   WHERE
-    //     pg_catalog.pg_function_is_visible(p.oid)
-    //     AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
-    //         AND n.nspname <> 'information_schema'
-    //     AND has_schema_privilege(quote_ident(n.nspname), 'CREATE, USAGE') = true
-    //     AND has_function_privilege(p.oid, 'execute') = true
-    //   ORDER BY 1, 2, 4;
-    //   `);
-    let functions = await dbConnection.query(vQueries.GetAllFunctions);
+    let functions = await dbConnection.query(`SELECT n.nspname as "schema",
+        p.proname as "name",
+        d.description,
+        pg_catalog.pg_get_function_result(p.oid) as "result_type",
+        pg_catalog.pg_get_function_arguments(p.oid) as "argument_types",
+      CASE
+        WHEN p.proisagg THEN 'agg'
+        WHEN p.proiswindow THEN 'window'
+        WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN 'trigger'
+        ELSE 'normal'
+      END as "type"
+      FROM pg_catalog.pg_proc p
+          LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+          LEFT JOIN pg_catalog.pg_description d ON p.oid = d.objoid
+      WHERE n.nspname <> 'information_schema'
+        AND pg_catalog.pg_function_is_visible(p.oid)
+        AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
+        AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
+        AND has_function_privilege(p.oid, 'execute') = true
+      ORDER BY 1, 2, 4;`);
     
     functions.rows.forEach((fn:DBFunctionsRaw) => {
       // return new ColumnNode(this.connection, this.table, column);

@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { PostgreSQLTreeDataProvider } from "../tree/treeProvider";
 import { TableNode } from "../tree/tableNode";
 import { Client } from 'pg';
 
@@ -24,8 +23,6 @@ export function getSelectTopCommand(runQueryAndDisplayResults) {
 
     const title = path.basename(textDocument.fileName);
     await vscode.window.showTextDocument(textDocument);
-
-    const resourceColumn = (vscode.window.activeTextEditor && vscode.window.activeTextEditor.viewColumn) || vscode.ViewColumn.One;
 
     return runQueryAndDisplayResults(sql, treeNode.pool, textDocument.uri, title);
   }

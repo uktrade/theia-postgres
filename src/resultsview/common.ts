@@ -1,9 +1,7 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
 import { randomBytes } from 'crypto';
 import { QueryResults, FieldInfo } from '../common/database';
 
-export function generateResultsHtml(resultsBody) {
+export function generateResultsHtml(resultsBody: string) {
   const nonce = randomBytes(16).toString('base64');
   return `<!DOCTYPE html>
   <html>
@@ -24,7 +22,7 @@ export function generateResultsHtml(resultsBody) {
   </html>`;
 }
 
-function getStyles(nonce) {
+function getStyles(nonce: string) {
   return `<style nonce="${nonce}">
     body {
       margin: 0;

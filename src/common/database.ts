@@ -1,6 +1,5 @@
-import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { Pool, Client, QueryResult, FieldDef, types, ClientConfig } from 'pg';
+import { Pool, QueryResult, FieldDef } from 'pg';
 import { generateResultsHtml, getResultsBody } from '../resultsview/common';
 
 export interface FieldInfo extends FieldDef {
@@ -23,8 +22,6 @@ export interface TypeResults extends QueryResult {
 
 export function getRunQueryAndDisplayResults(onChangeActive) {
   return async function runQueryAndDisplayResults(sql: string, pool: Pool, uri: vscode.Uri, title: string) {
-    let resultsUri = vscode.Uri.parse('postgres-results://' + uri.toString());
-
     const typeNamesQuery = `select oid, format_type(oid, typtypmod) as display_type, typname from pg_type`;
 
     try {

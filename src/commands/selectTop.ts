@@ -2,11 +2,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { PostgreSQLTreeDataProvider } from "../tree/treeProvider";
 import { TableNode } from "../tree/tableNode";
-import { runQueryAndDisplayResults } from "../common/database";
 import { Client } from 'pg';
 
 
-export function getSelectTopCommand() {
+export function getSelectTopCommand(runQueryAndDisplayResults) {
   return async function run(treeNode: TableNode) {
     const countInput: string = await vscode.window.showInputBox({ prompt: "Select how many?", placeHolder: "limit" });
     if (!countInput) return;
@@ -22,9 +21,12 @@ export function getSelectTopCommand() {
     const quoted = `${quotedSchema}.${quotedTable}`;
     const sql = `SELECT * FROM ${quoted} LIMIT ${count};`
     const textDocument = await vscode.workspace.openTextDocument({content: sql, language: 'postgres'});
+
     const title = path.basename(textDocument.fileName);
-    const uri = textDocument.uri.toString();
     await vscode.window.showTextDocument(textDocument);
-    return runQueryAndDisplayResults(sql, treeNode.pool, uri, title);
+
+    const resourceColumn = (vscode.window.activeTextEditor && vscode.window.activeTextEditor.viewColumn) || vscode.ViewColumn.One;
+
+    return runQueryAndDisplayResults(sql, treeNode.pool, textDocument.uri, title);
   }
 }

@@ -1,50 +1,29 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { QueryResults, FieldInfo } from '../common/database';
-import { Global } from '../common/global';
 
-export function disposeAll(disposables: vscode.Disposable[]) {
-  while (disposables.length) {
-    const item = disposables.pop();
-    if (!item) continue;
-    item.dispose();
-  }
-}
-
-export function generateResultsHtml(sourceUri: vscode.Uri, results: QueryResults[], state?: any) {
-  let pageScript = getExtensionResourcePath('index.js');
-  let pageStyle = getExtensionResourcePath('style.css');
+export function generateResultsHtml(resultsBody) {
   const nonce = new Date().getTime() + '' + new Date().getMilliseconds();
-
-  let html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
   <html>
     <head>
-      <meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: https: data:; media-src vscode-resource: https: data:; script-src 'nonce-${nonce}'; style-src vscode-resource: 'unsafe-inline' https: data:; font-src vscode-resource: https: data:;">
-      <meta id="vscode-postgres-results-data"
-        data-settings=""
-        data-state="${JSON.stringify(state || {}).replace(/"/g, '&quot;')}" />
-      <script src="${pageScript}" nonce="${nonce}"></script>
-      <base href="${sourceUri.with({scheme: 'vscode-resource'}).toString(true)}" />
+      <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'">
       ${getStyles(nonce)}
+      <script nonce="${nonce}">
+        const vscode = acquireVsCodeApi();
+        window.addEventListener('DOMContentLoaded', (event) => {
+          vscode.setState({'body': document.body.innerHTML});
+        });
+      </script>
     </head>
     <body class="vscode-body">
-      ${getResultsTables(results)}
+      ${resultsBody}
     </body>
   </html>`;
-  return html;
 }
 
 function getStyles(nonce) {
-  let config = Global.Configuration;
-  let prettyJsonFieldStyle = '';
-  if (config.get<boolean>('prettyPrintJSONfields')) {
-    prettyJsonFieldStyle = `
-    .jsonb-field, .json-field {
-      white-space: pre;
-    }
-    `;
-  }
   return `<style nonce="${nonce}">
     body {
       margin: 0;
@@ -90,8 +69,6 @@ function getStyles(nonce) {
     .field-type {
       font-size: smaller;
     }
-
-    ${prettyJsonFieldStyle}
     
     table {
       border-collapse: collapse;
@@ -113,16 +90,8 @@ function getStyles(nonce) {
     }
   </style>`;
 }
-function getExtensionResourcePath(mediaFile: string): string {
-  let filePath = path.join('media', mediaFile);
-  let absFilePath = Global.context.asAbsolutePath(filePath);
-  let uri = vscode.Uri.file(absFilePath);
-  uri = uri.with({ scheme: 'vscode-resource' });
-  let url = uri.toString();
-  return url;
-}
 
-function getResultsTables(results: QueryResults[]): string {
+export function getResultsBody(results: QueryResults[]): string {
   let html = '', first = true;
   for (const result of results) {
     if (!first)
@@ -232,11 +201,7 @@ function formatFieldValue(field: FieldInfo, value: any): string {
     case 'jsonb':
     case 'point':
     case 'circle':
-      if (Global.Configuration.get<boolean>("prettyPrintJSONfields"))
-        value = JSON.stringify(value, null, 2);
-      else
-        value = JSON.stringify(value);
-      break;
+      value = JSON.stringify(value);
     case 'timestamptz': value = value.toJSON().toString(); break;
     case 'text': canTruncate = true; break;
     default:
@@ -268,14 +233,7 @@ function formatInterval(value): string {
     }
   }
 
-  switch (Global.Configuration.get<string>("intervalFormat")) {
-    case 'humanize':
-      return formatIntervalHumanize(value, is_negative);
-    case 'succinct':
-      return formatIntervalSuccinct(value, is_negative);
-    default: // iso_8601
-      return formatIntervalISO(value, is_negative);
-  }
+  return formatIntervalISO(value, is_negative);
 }
 
 function formatIntervalISO(value: any, is_negative: boolean): string {

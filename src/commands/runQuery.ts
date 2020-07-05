@@ -1,9 +1,8 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Pool } from 'pg';
-import { runQueryAndDisplayResults } from "../common/database";
 
-export function getRunCommand(pool: Pool) {
+export function getRunCommand(pool: Pool, runQueryAndDisplayResults) {
   return async function run() {
     if (!vscode.window.activeTextEditor && !vscode.window.activeTextEditor.document) {
       vscode.window.showWarningMessage('No SQL file selected');
@@ -37,7 +36,9 @@ export function getRunCommand(pool: Pool) {
 
     const sql = editor.document.getText(selectionToTrim);
     const title = path.basename(editor.document.fileName);
-    const uri = editor.document.uri.toString();
-    return runQueryAndDisplayResults(sql, pool, uri, title);
+
+    const resourceColumn = (vscode.window.activeTextEditor && vscode.window.activeTextEditor.viewColumn) || vscode.ViewColumn.One;
+
+    return runQueryAndDisplayResults(sql, pool, editor.document.uri, title);
   }
 }

@@ -4,7 +4,8 @@ import * as path from 'path';
 import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree/treeProvider';
 import { Global } from './common/global';
-import { ResultsManager } from './resultsview/resultsManager';
+import { generateResultsHtml } from './resultsview/common';
+import { getRunQueryAndDisplayResults, QueryResults } from './common/database';
 
 import { IConnectionConfig } from "./common/IConnectionConfig";
 import { Pool } from 'pg';
@@ -17,9 +18,6 @@ import { getSelectTopCommand } from './commands/selectTop';
 
 export async function activate(context: vscode.ExtensionContext) {
   Global.context = context;
-
-  Global.ResultManager = new ResultsManager();
-  context.subscriptions.push(Global.ResultManager);
 
   const credentials = process.env['DATABASE_DSN__datasets_1'];
   const connectionConfig: IConnectionConfig = {
@@ -36,11 +34,32 @@ export async function activate(context: vscode.ExtensionContext) {
   const tree = new PostgreSQLTreeDataProvider(pool);
   context.subscriptions.push(vscode.window.registerTreeDataProvider('postgres', tree));
 
+  // The "save" button that appears with results is a bit faffy to maintain due to the order
+  // that multiple panels fire their change events when tabbling between.
+  var numActive: number = 0;
+  var activeResults: QueryResults[] | null = null;
+  function onChangeActive(isActive: boolean, results: QueryResults[]) {
+    numActive = numActive + (isActive ? 1 : -1);
+    if (isActive) {
+      activeResults = results;
+    }
+    vscode.commands.executeCommand('setContext', 'vscodePostgresResultFocus', numActive > 0);
+  }
+  const runQueryAndDisplayResults = getRunQueryAndDisplayResults(onChangeActive);
+
+  // The "state" of the WebView is simply the HTML of the body. Doesn't allow to save after
+  // a refresh of the page, but KISS for now
+  vscode.window.registerWebviewPanelSerializer('vscode-postgres.results', new (class implements vscode.WebviewPanelSerializer {
+    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+      webviewPanel.webview.html = generateResultsHtml(state.body);
+    }
+  }));
+
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.newQuery', getNewQueryCommand()));
   context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.refresh', getRefreshCommand(tree)));
-  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.runQuery', getRunCommand(pool)));
-  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.saveResult', getSaveResultCommand()));
-  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.selectTop', getSelectTopCommand()));
+  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.runQuery', getRunCommand(pool, runQueryAndDisplayResults)));
+  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.saveResult', getSaveResultCommand(() => activeResults)));
+  context.subscriptions.push(vscode.commands.registerCommand('vscode-postgres.selectTop', getSelectTopCommand(runQueryAndDisplayResults)));
 
   await setupPostgresLanguageClient(context, connectionConfig);
 }

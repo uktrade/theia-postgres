@@ -8,9 +8,9 @@ interface SaveTableQuickPickItem extends QuickPickItem {
   readonly index: number;
 }
 
-export function getSaveResultCommand() {
+export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
   return async function run(uri: vscode.Uri) {
-    let results = Global.ResultManager.activeWinResults;
+    let results = getActiveResults();
     if (!results) {
       vscode.window.showWarningMessage('Unable to save data - dataset not found');
       return;

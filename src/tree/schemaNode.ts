@@ -1,7 +1,7 @@
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { Pool } from 'pg';
 import { INode } from "./INode";
-import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { TableNode } from "./tableNode";
 import { InfoNode } from "./infoNode";
 
@@ -9,10 +9,10 @@ export class SchemaNode implements INode {
 
   constructor(private readonly pool: Pool, private readonly schemaName: string) {}
   
-  public getTreeItem(): TreeItem {
+  public getTreeItem(): vscode.TreeItem {
     return {
       label: this.schemaName,
-      collapsibleState: TreeItemCollapsibleState.Collapsed,
+      collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
       contextValue: 'vscode-postgres.tree.schema',
       iconPath: {
         light: path.join(__dirname, '../../resources/light/schema.svg'),

@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
-import { QuickPickItem } from "vscode";
 import * as csv from 'csv-stringify';
 import { QueryResults } from "../common/database";
 
-interface SaveTableQuickPickItem extends QuickPickItem {
+interface SaveTableQuickPickItem extends vscode.QuickPickItem {
   readonly index: number;
 }
 

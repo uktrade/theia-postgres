@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { INode } from './INode';
-import { Constants } from '../common/constants';
 import { Pool } from 'pg';
 import { SchemaNode } from './schemaNode';
 

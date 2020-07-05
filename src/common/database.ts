@@ -19,7 +19,6 @@ export interface QueryResults {
   command: string;
   rows?: any[];
   fields?: FieldInfo[];
-  flaggedForDeletion?: boolean;
   message?: string;
 };
 

@@ -189,7 +189,7 @@ function generateSelectTableResult(result: QueryResults): string {
   return html;
 }
 
-function formatFieldValue(field: FieldInfo, value: any): string {
+function formatFieldValue(field: FieldInfo, value: any): string | undefined {
   if (value === null) return `<i>null</i>`;
   if (typeof value === typeof undefined) return '';
 
@@ -215,13 +215,13 @@ function formatFieldValue(field: FieldInfo, value: any): string {
   return formatted;
 }
 
-function htmlEntities(str: string): string {
+function htmlEntities(str: string): string | undefined {
   if (typeof str !== 'string') return str;
   return str ? str.replace(/[\u00A0-\u9999<>\&"']/gim, (i) => `&#${i.charCodeAt(0)};`) : undefined;
 }
 
 // #region "Format Interval"
-function formatInterval(value): string {
+function formatInterval(value: any): string {
   let keys: string[] = ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds'];
   let is_negative = false;
   for (let key of keys) {
@@ -256,35 +256,3 @@ function formatIntervalISO(value: any, is_negative: boolean): string {
   if (iso === 'PT') iso += '0S';
   return (is_negative ? '-' : '') + iso;
 }
-
-function formatIntervalHumanize(value: any, is_negative: boolean): string {
-  let values: string[] = [];
-  if (!value.hasOwnProperty('seconds')) value.seconds = 0;
-  if (value.milliseconds) value.seconds += (value.milliseconds / 1000);
-
-  if (value.years) values.push(value.years.toString() + ' years');
-  if (value.months) values.push(value.months.toString() + ' months');
-  if (value.days) values.push(value.days.toString() + ' days');
-  if (value.hours) values.push(value.hours.toString() + ' hours');
-  if (value.minutes) values.push(value.minutes.toString() + ' minutes');
-  if (value.seconds) values.push(value.seconds.toString() + ' seconds');
-  if (values.length < 1) values.push('0 seconds');
-  if (is_negative) values.push('ago');
-  return values.join(' ');
-}
-
-function formatIntervalSuccinct(value: any, is_negative: boolean): string {
-  let values: string[] = [];
-  if (value.milliseconds) value.seconds += (value.milliseconds / 1000);
-
-  if (value.years) values.push(value.years.toString());
-  if (values.length || value.months) values.push(value.months.toString());
-  if (values.length || value.days) values.push(value.days.toString());
-  if (values.length || value.hours) values.push(value.hours.toString());
-  if (values.length || value.minutes) values.push(value.minutes.toString());
-  if (values.length || value.seconds) values.push(value.seconds.toString());
-  if (values.length < 1) values.push('0');
-  if (is_negative) values.unshift('-');
-  return values.join(':');
-}
-// #endregion

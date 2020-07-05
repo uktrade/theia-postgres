@@ -4,8 +4,6 @@ import { Pool, Client } from 'pg';
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { InfoNode } from './infoNode';
 import { ColumnNode } from './columnNode';
-import { QueryResult } from 'pg';
-import { SqlQueryManager } from '../queries';
 
 export class TableNode implements INode {
 

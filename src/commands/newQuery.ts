@@ -6,13 +6,12 @@ export function getNewQueryCommand() {
     // Probably a bit of a race condition if multiple calls at the same time
     // but the user would have to be very quick
     var index = 1;
-    const path = () => `/home/theia/untitled-${index}.sql`
-    while (fs.existsSync(path())) {
+    const getPath = () => `/home/theia/untitled-${index}.sql`
+    while (fs.existsSync(getPath())) {
       ++index;
     }
 
-    const location = vscode.Uri.parse('untitled:' + path());
-    const textDocument = await vscode.workspace.openTextDocument(location);
-    await vscode.window.showTextDocument(textDocument);
+    fs.writeFileSync(getPath(), '', 'utf8')
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getPath()));
   }
 }

@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { TableNode } from "../tree/tableNode";
@@ -19,11 +20,18 @@ export function getSelectTopCommand(runQueryAndDisplayResults) {
     const quotedTable = Client.prototype.escapeIdentifier(treeNode.table);
     const quoted = `${quotedSchema}.${quotedTable}`;
     const sql = `SELECT * FROM ${quoted} LIMIT ${count};`
-    const textDocument = await vscode.workspace.openTextDocument({ content: sql, language: 'postgres' });
 
-    const title = path.basename(textDocument.fileName);
+    var index = 1;
+    const getPath = () => `/home/theia/untitled-${index}.sql`
+    while (fs.existsSync(getPath())) {
+      ++index;
+    }
+    fs.writeFileSync(getPath(), sql, 'utf8');
+
+    const textDocument = await vscode.workspace.openTextDocument(getPath());
     await vscode.window.showTextDocument(textDocument);
 
+    const title = path.basename(textDocument.fileName);
     return runQueryAndDisplayResults(sql, treeNode.pool, textDocument.uri, title);
   }
 }

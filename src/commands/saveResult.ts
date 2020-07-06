@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as csv from 'csv-stringify';
 import { QueryResults } from "../common/database";
@@ -64,16 +65,13 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
       });
     }
 
-    try {
-      let doc: vscode.TextDocument = await vscode.workspace.openTextDocument({ language: selFormat });
-      let editor: vscode.TextEditor = await vscode.window.showTextDocument(doc, 1, false);
-      let result = await editor.edit(edit => edit.insert(new vscode.Position(0, 0), fileData));
-      if (!result)
-        vscode.window.showErrorMessage('Error occurred opening content in editor');
+    var index = 1;
+    const getPath = () => `/home/theia/untitled-${index}.${selFormat}`
+    while (fs.existsSync(getPath())) {
+      ++index;
     }
-    catch (err) {
-      vscode.window.showErrorMessage(err);
-    }
+    fs.writeFileSync(getPath(), fileData, 'utf8');
+    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getPath()));
   }
 }
 

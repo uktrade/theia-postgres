@@ -47,14 +47,13 @@ export function getRunQueryAndDisplayResults(onChangeActive) {
       };
     });
 
-    const viewColumn = ((theia.window.activeTextEditor && theia.window.activeTextEditor.viewColumn) || theia.ViewColumn.One) + 1;
     const panel = theia.window.createWebviewPanel(
       'vscode-postgres.results',
-      'Results: ' + title,
-      viewColumn,
-      {
-        enableScripts: true
-      }
+      'Results: ' + title, {
+      area: theia.WebviewPanelTargetArea.Bottom
+    }, {
+      enableScripts: true
+    }
     );
 
     var isActive = false;

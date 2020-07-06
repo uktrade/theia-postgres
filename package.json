@@ -87,8 +87,8 @@
         "command": "vscode-postgres.newQuery",
         "title": "New Query",
         "icon": {
-          "light": "resources/light/add.svg",
-          "dark": "resources/dark/add.svg"
+          "light": "resources/light/new-query.svg",
+          "dark": "resources/dark/new-query.svg"
         },
         "category": "PostgreSQL"
       },
@@ -102,8 +102,8 @@
         "title": "Select Top...",
         "category": "PostgreSQL",
         "icon": {
-          "light": "./resources/light/add.svg",
-          "dark": "./resources/dark/add.svg"
+          "light": "./resources/light/new-query.svg",
+          "dark": "./resources/dark/new-query.svg"
         }
       },
       {

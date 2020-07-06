@@ -109,7 +109,11 @@
       {
         "command": "vscode-postgres.runQuery",
         "title": "Run Query",
-        "category": "PostgreSQL"
+        "category": "PostgreSQL",
+        "icon": {
+          "light": "./resources/light/run-file.svg",
+          "dark": "./resources/dark/run-file.svg"
+        }
       },
       {
         "command": "vscode-postgres.saveResult",
@@ -126,6 +130,11 @@
         {
           "command": "vscode-postgres.saveResult",
           "when": "vscodePostgresResultFocus",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-postgres.runQuery",
+          "when": "editorLangId == postgres",
           "group": "navigation"
         }
       ],

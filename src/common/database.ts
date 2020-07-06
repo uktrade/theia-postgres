@@ -1,3 +1,4 @@
+import * as theia from '@theia/plugin';
 import * as vscode from 'vscode';
 import { Pool, QueryResult, FieldDef } from 'pg';
 import { generateResultsHtml, getResultsBody } from '../resultsview/common';
@@ -46,8 +47,8 @@ export function getRunQueryAndDisplayResults(onChangeActive) {
       };
     });
 
-    const viewColumn = ((vscode.window.activeTextEditor && vscode.window.activeTextEditor.viewColumn) || vscode.ViewColumn.One) + 1;
-    const panel = vscode.window.createWebviewPanel(
+    const viewColumn = ((theia.window.activeTextEditor && theia.window.activeTextEditor.viewColumn) || theia.ViewColumn.One) + 1;
+    const panel = theia.window.createWebviewPanel(
       'vscode-postgres.results',
       'Results: ' + title,
       viewColumn,

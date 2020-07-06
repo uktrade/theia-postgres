@@ -45,8 +45,8 @@ export async function start(context: theia.PluginContext) {
 
   // The "state" of the WebView is simply the HTML of the body. Doesn't allow to save after
   // a refresh of the page, but KISS for now
-  vscode.window.registerWebviewPanelSerializer('vscode-postgres.results', new (class implements vscode.WebviewPanelSerializer {
-    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
+  theia.window.registerWebviewPanelSerializer('vscode-postgres.results', new (class implements theia.WebviewPanelSerializer {
+    async deserializeWebviewPanel(webviewPanel: theia.WebviewPanel, state: any) {
       webviewPanel.webview.html = generateResultsHtml(state.body);
     }
   }));

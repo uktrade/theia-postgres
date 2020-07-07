@@ -32,38 +32,6 @@ function getStyles(nonce: string) {
     pre.vscode-postgres-result {
       margin: 5px;
     }
-    
-    pre.vscode-postgres-result-insert {
-    
-    }
-    
-    pre.vscode-postgres-result-update {
-      
-    }
-    
-    pre.vscode-postgres-result-create {
-      
-    }
-    
-    pre.vscode-postgres-result-delete {
-      
-    }
-    
-    pre.vscode-postgres-result-explain {
-      
-    }
-    
-    pre.vscode-postgres-result-generic {
-      
-    }
-    
-    pre.vscode-postgres-result-message {
-      
-    }
-
-    pre.vscode-postgres-result-select {
-      
-    }
 
     .field-type {
       font-size: smaller;
@@ -160,7 +128,7 @@ function generateSelectTableResult(result: QueryResults): string {
     }).join() +
     `</tr></thead><tbody>` +
     result.rows.map((row, rowIndex) => {
-      return `<tr><th class="row-header">${rowIndex++}</th>` + result.fields.map((field, idx) => {
+      return `<tr><th class="row-header">${++rowIndex}</th>` + result.fields.map((field, idx) => {
         const formatted = formatFieldValue(field, row[idx]);
         return `<td class="${field.format}-field">${formatted ? formatted : ''}</td>`;
       }).join() + `</tr>`;

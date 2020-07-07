@@ -150,37 +150,21 @@ function generateGenericResult(result: QueryResults): string {
 }
 
 function generateSelectResult(result: QueryResults): string {
-  let html = getRowCountResult(result.rowCount, 'returned', 'select');
-  html += generateSelectTableResult(result);
-  return html;
+  return getRowCountResult(result.rowCount, 'returned', 'select') + generateSelectTableResult(result);
 }
 
 function generateSelectTableResult(result: QueryResults): string {
-  let html = `<table>`;
-  // first the colum headers
-  html += `<thead><tr><th></th>`;
-  for (const field of result.fields) {
-    html += `<th><div class="field-name">${field.name}</div><div class="field-type">${field.display_type}</div></th>`;
-  }
-  html += `</tr></thead>`;
-
-  // now the body
-  let rowIndex = 1;
-  html += `<tbody>`;
-  if (result.rows && result.rows.length) {
-    for (const row of result.rows) {
-      html += `<tr><th class="row-header">${rowIndex++}</th>`;
-      result.fields.forEach((field, idx) => {
-        let formatted = formatFieldValue(field, row[idx]);
-        html += `<td class="${field.format}-field">${formatted ? formatted : ''}</td>`;
-      });
-      html += `</tr>`;
-    }
-  }
-  html += `</tbody>`;
-
-  html += `</table>`;
-  return html;
+  return `<table><thead><tr><th></th>` +
+    result.fields.map((field) => {
+      return `<th><div class="field-name">${field.name}</div><div class="field-type">${field.display_type}</div></th>`;
+    }).join() +
+    `</tr></thead><tbody>` +
+    result.rows.map((row, rowIndex) => {
+      return `<tr><th class="row-header">${rowIndex++}</th>` + result.fields.map((field, idx) => {
+        const formatted = formatFieldValue(field, row[idx]);
+        return `<td class="${field.format}-field">${formatted ? formatted : ''}</td>`;
+      }).join() + `</tr>`;
+    }).join() + `</tbody></table>`;
 }
 
 function formatFieldValue(field: FieldInfo, value: any): string | undefined {

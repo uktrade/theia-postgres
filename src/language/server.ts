@@ -11,17 +11,8 @@ import { Validator } from './validator';
 import { IConnectionConfig } from '../common/IConnectionConfig';
 import { BackwardIterator } from '../common/backwordIterator';
 
-export class PgClient extends Client {
-  pg_version: number;
-
-  constructor(config?: string | ClientConfig) {
-    super(config);
-  }
-}
-
 export interface ISetConnection {
   connectionConfig: IConnectionConfig;
-  documentUri?: string;
 }
 
 export interface ExplainResults {
@@ -77,11 +68,9 @@ export interface Ident {
   name: string
 }
 
-let schemaCache: DBSchema[] = [];
-let tableCache: DBTable[] = [];
-let functionCache: DBFunction[] = [];
-let keywordCache: string[] = [];
-let databaseCache: string[] = [];
+export interface FieldCompletionItem extends CompletionItem {
+  tables?: string[]
+}
 
 /**
  * To Debug the language server
@@ -92,8 +81,6 @@ let databaseCache: string[] = [];
   */
 
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
-let dbConnection: PgClient = null,
-  dbConnOptions: IConnectionConfig = null;
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -124,223 +111,148 @@ connection.onInitialize((_params): InitializeResult => {
 o.`Y8b 88""     88   Y8   8P 88"""       8I  dY 88""Yb     Yb       dP__Yb  Yb      888888 88""   
 8bodP' 888888   88   `YbodP' 88         8888Y"  88oodP      YboodP dP""""Yb  YboodP 88  88 888888 
 */
-function dbConnectionEnded() {
-  dbConnection = null;
-  tableCache = [];
-  functionCache = [];
-  keywordCache = [];
-  databaseCache = [];
-}
+
+connection.onRequest('set_connection', async function(newConnection: ISetConnection) {
+  try {
+    await setupDBConnection(newConnection.connectionConfig)
+  } catch (err) {
+    console.log(err.message)
+  }
+});
 
 async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<void> {
-  if (connectionOptions) {
-    dbConnection = new PgClient(connectionOptions);
-    await dbConnection.connect();
-    const versionRes = await dbConnection.query(`SELECT current_setting('server_version_num') as ver_num;`);
-    let versionNumber = parseInt(versionRes.rows[0].ver_num);
-    dbConnection.pg_version = versionNumber;
-    dbConnection.on('end', dbConnectionEnded);
+  const dbConnection = new Client(connectionOptions);
+  await dbConnection.connect();
 
-    loadCompletionCache(connectionOptions);
-  }
-  dbConnOptions = connectionOptions;
-}
+  const schemaCache = (await dbConnection.query(`
+    SELECT nspname as name
+    FROM pg_namespace
+    WHERE
+      nspname not in ('information_schema', 'pg_catalog', 'pg_toast')
+      AND nspname not like 'pg_temp_%'
+      AND nspname not like 'pg_toast_temp_%'
+      AND has_schema_privilege(oid, 'CREATE, USAGE')
+    ORDER BY nspname;`)).rows;
 
-async function loadCompletionCache(connectionOptions: IConnectionConfig) {
-  if (!connectionOptions || !dbConnection) return;
-  // setup database caches for schemas, functions, tables, and fields
-  try {
-    if (connectionOptions.database) {
-      let schemas = await dbConnection.query(`
-        SELECT nspname as name
-        FROM pg_namespace
-        WHERE
-          nspname not in ('information_schema', 'pg_catalog', 'pg_toast')
-          AND nspname not like 'pg_temp_%'
-          AND nspname not like 'pg_toast_temp_%'
-          AND has_schema_privilege(oid, 'CREATE, USAGE')
-        ORDER BY nspname;
-        `);
-      schemaCache = schemas.rows;
-    }
-  }
-  catch (err) {
-    console.log(err.message);
-  }
-
-  try {
-    if (connectionOptions.database) {
-      /*
-      SELECT tablename as name, true as is_table FROM pg_tables WHERE schemaname not in ('information_schema', 'pg_catalog')
-      union all
-      SELECT viewname as name, false as is_table FROM pg_views WHERE schemaname not in ('information_schema', 'pg_catalog') order by name;
-      */
-      let tablesAndColumns = await dbConnection.query(`
+  const tableCache = (await dbConnection.query(`
+    SELECT
+      tbl.schemaname,
+      tbl.tablename,
+      tbl.quoted_name,
+      tbl.is_table,
+      json_agg(a) as columns
+    FROM
+      (
         SELECT
-          tbl.schemaname,
-          tbl.tablename,
-          tbl.quoted_name,
-          tbl.is_table,
-          json_agg(a) as columns
+          schemaname,
+          tablename,
+          (quote_ident(schemaname) || '.' || quote_ident(tablename)) as quoted_name,
+          true as is_table
         FROM
-          (
-            SELECT
-              schemaname,
-              tablename,
-              (quote_ident(schemaname) || '.' || quote_ident(tablename)) as quoted_name,
-              true as is_table
-            FROM
-              pg_tables
-            WHERE
-              schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
-              AND schemaname not like 'pg_temp_%'
-              AND schemaname not like 'pg_toast_temp_%'
-              AND has_schema_privilege(quote_ident(schemaname), 'CREATE, USAGE') = true
-              AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
-            union all
-            SELECT
-              schemaname,
-              viewname as tablename,
-              (quote_ident(schemaname) || '.' || quote_ident(viewname)) as quoted_name,
-              false as is_table
-            FROM pg_views
-            WHERE
-              schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
-              AND schemaname not like 'pg_temp_%'
-              AND schemaname not like 'pg_toast_temp_%'
-              AND has_schema_privilege(quote_ident(schemaname), 'CREATE, USAGE') = true
-              AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
-          ) as tbl
-          LEFT JOIN (
-            SELECT
-              attrelid,
-              attname,
-              format_type(atttypid, atttypmod) as data_type,
-              attnum,
-              attisdropped
-            FROM
-              pg_attribute
-          ) as a ON (
-            a.attrelid = tbl.quoted_name::regclass
-            AND a.attnum > 0
-            AND NOT a.attisdropped
-            AND has_column_privilege(tbl.quoted_name, a.attname, 'SELECT, INSERT, UPDATE, REFERENCES')
-          )
-        GROUP BY schemaname, tablename, quoted_name, is_table;
-        `);
-      tableCache = tablesAndColumns.rows;
-    }
-  }
-  catch (err) {
-    console.log(err.message);
-  }
+          pg_tables
+        WHERE
+          schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
+          AND schemaname not like 'pg_temp_%'
+          AND schemaname not like 'pg_toast_temp_%'
+          AND has_schema_privilege(quote_ident(schemaname), 'CREATE, USAGE') = true
+          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+        union all
+        SELECT
+          schemaname,
+          viewname as tablename,
+          (quote_ident(schemaname) || '.' || quote_ident(viewname)) as quoted_name,
+          false as is_table
+        FROM pg_views
+        WHERE
+          schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
+          AND schemaname not like 'pg_temp_%'
+          AND schemaname not like 'pg_toast_temp_%'
+          AND has_schema_privilege(quote_ident(schemaname), 'CREATE, USAGE') = true
+          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+      ) as tbl
+      LEFT JOIN (
+        SELECT
+          attrelid,
+          attname,
+          format_type(atttypid, atttypmod) as data_type,
+          attnum,
+          attisdropped
+        FROM
+          pg_attribute
+      ) as a ON (
+        a.attrelid = tbl.quoted_name::regclass
+        AND a.attnum > 0
+        AND NOT a.attisdropped
+        AND has_column_privilege(tbl.quoted_name, a.attname, 'SELECT, INSERT, UPDATE, REFERENCES')
+      )
+    GROUP BY schemaname, tablename, quoted_name, is_table;`)).rows;
 
-  try {
-    let functions = await dbConnection.query(`SELECT n.nspname as "schema",
-        p.proname as "name",
-        d.description,
-        pg_catalog.pg_get_function_result(p.oid) as "result_type",
-        pg_catalog.pg_get_function_arguments(p.oid) as "argument_types",
-      CASE
-        WHEN p.proisagg THEN 'agg'
-        WHEN p.proiswindow THEN 'window'
-        WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN 'trigger'
-        ELSE 'normal'
-      END as "type"
-      FROM pg_catalog.pg_proc p
-          LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
-          LEFT JOIN pg_catalog.pg_description d ON p.oid = d.objoid
-      WHERE n.nspname <> 'information_schema'
-        AND pg_catalog.pg_function_is_visible(p.oid)
-        AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
-        AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
-        AND has_function_privilege(p.oid, 'execute') = true
-      ORDER BY 1, 2, 4;`);
+  let functions = await dbConnection.query(`SELECT n.nspname as "schema",
+      p.proname as "name",
+      d.description,
+      pg_catalog.pg_get_function_result(p.oid) as "result_type",
+      pg_catalog.pg_get_function_arguments(p.oid) as "argument_types",
+    CASE
+      WHEN p.proisagg THEN 'agg'
+      WHEN p.proiswindow THEN 'window'
+      WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN 'trigger'
+      ELSE 'normal'
+    END as "type"
+    FROM pg_catalog.pg_proc p
+        LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+        LEFT JOIN pg_catalog.pg_description d ON p.oid = d.objoid
+    WHERE n.nspname <> 'information_schema'
+      AND pg_catalog.pg_function_is_visible(p.oid)
+      AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
+      AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
+      AND has_function_privilege(p.oid, 'execute') = true
+    ORDER BY 1, 2, 4;`);
 
-    functions.rows.forEach((fn: DBFunctionsRaw) => {
-      // return new ColumnNode(this.connection, this.table, column);
-      let existing = functionCache.find(f => f.name === fn.name);
-      if (!existing) {
-        existing = {
-          name: fn.name,
-          schema: fn.schema,
-          result_type: fn.result_type,
-          type: fn.type,
-          overloads: []
-        }
-        functionCache.push(existing);
+  const functionCache: DBFunction[] = [];
+  functions.rows.forEach((fn: DBFunctionsRaw) => {
+    // return new ColumnNode(this.connection, this.table, column);
+    let existing = functionCache.find(f => f.name === fn.name);
+    if (!existing) {
+      existing = {
+        name: fn.name,
+        schema: fn.schema,
+        result_type: fn.result_type,
+        type: fn.type,
+        overloads: []
       }
-      let args = fn.argument_types.split(',').filter(a => a).map<string>(a => a.trim());
-      existing.overloads.push({ args, description: fn.description });
-    });
-  }
-  catch (err) {
-    console.log(err.message);
-  }
+      functionCache.push(existing);
+    }
+    let args = fn.argument_types.split(',').filter(a => a).map<string>(a => a.trim());
+    existing.overloads.push({ args, description: fn.description });
+  });
 
-  try {
-    let keywords = await dbConnection.query(`select * from pg_get_keywords();`);
-    keywordCache = keywords.rows.map<string>(rw => rw.word.toLocaleUpperCase());
-  }
-  catch (err) {
-    console.log(err.message);
-  }
+  let keywords = await dbConnection.query(`select * from pg_get_keywords();`);
+  const keywordCache = keywords.rows.map<string>(rw => rw.word.toLocaleUpperCase());
 
-  try {
-    let databases = await dbConnection.query(`
+  const databaseCache = (await dbConnection.query(`
     SELECT datname
     FROM pg_database
     WHERE
       datistemplate = false
-      AND has_database_privilege(quote_ident(datname), 'TEMP, CONNECT') = true
-    ;`);
-    databaseCache = databases.rows.map<string>(rw => rw.datname);
-  }
-  catch (err) {
-    console.log(err.message);
-  }
-}
+      AND has_database_privilege(quote_ident(datname), 'TEMP, CONNECT') = true;`)).rows.map<string>(rw => rw.datname);
 
-connection.onRequest('set_connection', async function() {
-  let newConnection: ISetConnection = arguments[0];
-  if (!dbConnOptions && !newConnection.connectionConfig) {
-    // neither has a connection - just exist
-    return;
-  }
-  if (dbConnOptions && newConnection.connectionConfig && newConnection.connectionConfig.host === dbConnOptions.host && newConnection.connectionConfig.database === dbConnOptions.database && newConnection.connectionConfig.port === dbConnOptions.port && newConnection.connectionConfig.user === dbConnOptions.user) {
-    // same connection - just exit
-    return;
-  }
+  /*
+   dP"Yb  88   88 888888 88""Yb Yb  dP     Yb    dP    db    88     88 8888b.     db    888888 88  dP"Yb  88b 88 
+  dP   Yb 88   88 88__   88__dP  YbdP       Yb  dP    dPYb   88     88  8I  Yb   dPYb     88   88 dP   Yb 88Yb88 
+  Yb b dP Y8   8P 88""   88"Yb    8P         YbdP    dP__Yb  88  .o 88  8I  dY  dP__Yb    88   88 Yb   dP 88 Y88 
+   `"YoYo `YbodP' 888888 88  Yb  dP           YP    dP""""Yb 88ood8 88 8888Y"  dP""""Yb   88   88  YbodP  88  Y8 
+  */
+  documents.onDidOpen((change) => {
+    validateTextDocument(change.document);
+  });
 
-  if (dbConnection) {
-    // kill the connection first
-    await dbConnection.end();
-  }
-  setupDBConnection(newConnection.connectionConfig)
-    .catch(err => {
-      console.log(err.message)
-    });
-});
+  documents.onDidChangeContent((change) => {
+    validateTextDocument(change.document);
+  });
 
-/*
- dP"Yb  88   88 888888 88""Yb Yb  dP     Yb    dP    db    88     88 8888b.     db    888888 88  dP"Yb  88b 88 
-dP   Yb 88   88 88__   88__dP  YbdP       Yb  dP    dPYb   88     88  8I  Yb   dPYb     88   88 dP   Yb 88Yb88 
-Yb b dP Y8   8P 88""   88"Yb    8P         YbdP    dP__Yb  88  .o 88  8I  dY  dP__Yb    88   88 Yb   dP 88 Y88 
- `"YoYo `YbodP' 888888 88  Yb  dP           YP    dP""""Yb 88ood8 88 8888Y"  dP""""Yb   88   88  YbodP  88  Y8 
-*/
-documents.onDidOpen((change) => {
-  validateTextDocument(change.document);
-});
-
-documents.onDidChangeContent((change) => {
-  validateTextDocument(change.document);
-});
-
-var _NL = '\n'.charCodeAt(0);
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-  let diagnostics: Diagnostic[] = [];
-  // parse and find issues
-  if (dbConnection) {
+  const _NL = '\n'.charCodeAt(0);
+  async function validateTextDocument(textDocument: TextDocument): Promise<void> {
+    let diagnostics: Diagnostic[] = [];
     let sqlText = textDocument.getText();
     if (!sqlText) {
       connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
@@ -395,218 +307,215 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
             end: { line: sql.line + errLine, character: spacePos }
           },
           message: err.message,
-          source: dbConnOptions.host
+          source: 'datasets'
         });
       }
     }
-  }
-  connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
-}
-
-/*
- dP""b8  dP"Yb  8888b.  888888      dP""b8  dP"Yb  8b    d8 88""Yb 88     888888 888888 88  dP"Yb  88b 88 
-dP   `" dP   Yb  8I  Yb 88__       dP   `" dP   Yb 88b  d88 88__dP 88     88__     88   88 dP   Yb 88Yb88 
-Yb      Yb   dP  8I  dY 88""       Yb      Yb   dP 88YbdP88 88"""  88  .o 88""     88   88 Yb   dP 88 Y88 
- YboodP  YbodP  8888Y"  888888      YboodP  YbodP  88 YY 88 88     88ood8 888888   88   88  YbodP  88  Y8 
-*/
-export interface FieldCompletionItem extends CompletionItem {
-  tables?: string[]
-}
-
-connection.onCompletion((e: any): CompletionItem[] => {
-  let items: FieldCompletionItem[] = [];
-  let scenarioFound = false;
-
-  let document = documents.get(e.textDocument.uri);
-  if (!document) return items;
-
-  let iterator = new BackwardIterator(document, e.position.character - 1, e.position.line);
-
-  // // look back and grab the text immediately prior to match to table
-  // let line = document.getText({
-  //   start: {line: e.position.line, character: 0},
-  //   end: {line: e.position.line, character: e.position.character}
-  // });
-
-  // let prevSpace = line.lastIndexOf(' ', e.position.character - 1) + 1;
-  // let keyword = line.substring(prevSpace, e.position.character - 1);
-
-  if (e.context.triggerCharacter === '"') {
-    let startingQuotedIdent = iterator.isFowardDQuote();
-    if (!startingQuotedIdent) return items;
-
-    iterator.next(); // get passed the starting quote
-    if (iterator.isNextPeriod()) {
-      // probably a field - get the ident
-      let ident = iterator.readIdent();
-      let isQuotedIdent = false;
-      if (ident.match(/^\".*?\"$/)) {
-        isQuotedIdent = true;
-        ident = fixQuotedIdent(ident);
-      }
-      let table = tableCache.find(tbl => {
-        return (isQuotedIdent && tbl.tablename === ident) || (!isQuotedIdent && tbl.tablename.toLocaleLowerCase() == ident.toLocaleLowerCase());
-      });
-
-      if (!table) return items;
-      table.columns.forEach(field => {
-        items.push({
-          label: field.attname,
-          kind: CompletionItemKind.Property,
-          detail: field.data_type
-        });
-      });
-    } else {
-      // probably a table - list the tables
-      tableCache.forEach(table => {
-        items.push({
-          label: table.tablename,
-          kind: CompletionItemKind.Class
-        });
-      });
-    }
-    return items;
+    connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
   }
 
-  if (e.context.triggerCharacter === '.') {
-    let idents = readIdents(iterator, 3);
-    let pos = 0;
+  /*
+   dP""b8  dP"Yb  8888b.  888888      dP""b8  dP"Yb  8b    d8 88""Yb 88     888888 888888 88  dP"Yb  88b 88 
+  dP   `" dP   Yb  8I  Yb 88__       dP   `" dP   Yb 88b  d88 88__dP 88     88__     88   88 dP   Yb 88Yb88 
+  Yb      Yb   dP  8I  dY 88""       Yb      Yb   dP 88YbdP88 88"""  88  .o 88""     88   88 Yb   dP 88 Y88 
+   YboodP  YbodP  8888Y"  888888      YboodP  YbodP  88 YY 88 88     88ood8 888888   88   88  YbodP  88  Y8 
+  */
 
-    let schema = schemaCache.find(sch => {
-      return (idents[pos].isQuoted && sch.name === idents[pos].name) || (!idents[pos].isQuoted && sch.name.toLocaleLowerCase() == idents[pos].name.toLocaleLowerCase());
-    });
+  connection.onCompletion((e: any): CompletionItem[] => {
+    let items: FieldCompletionItem[] = [];
+    let scenarioFound = false;
 
-    if (!schema) {
-      schema = schemaCache.find(sch => {
-        return sch.name == "public"
-      });
-    } else {
-      pos++;
-    }
+    let document = documents.get(e.textDocument.uri);
+    if (!document) return items;
 
-    if (idents.length == pos) {
-      tableCache.forEach(tbl => {
-        if (tbl.schemaname != schema.name) {
-          return;
+    let iterator = new BackwardIterator(document, e.position.character - 1, e.position.line);
+
+    // // look back and grab the text immediately prior to match to table
+    // let line = document.getText({
+    //   start: {line: e.position.line, character: 0},
+    //   end: {line: e.position.line, character: e.position.character}
+    // });
+
+    // let prevSpace = line.lastIndexOf(' ', e.position.character - 1) + 1;
+    // let keyword = line.substring(prevSpace, e.position.character - 1);
+
+    if (e.context.triggerCharacter === '"') {
+      let startingQuotedIdent = iterator.isFowardDQuote();
+      if (!startingQuotedIdent) return items;
+
+      iterator.next(); // get passed the starting quote
+      if (iterator.isNextPeriod()) {
+        // probably a field - get the ident
+        let ident = iterator.readIdent();
+        let isQuotedIdent = false;
+        if (ident.match(/^\".*?\"$/)) {
+          isQuotedIdent = true;
+          ident = fixQuotedIdent(ident);
         }
-        items.push({
-          label: tbl.tablename,
-          kind: CompletionItemKind.Class,
-          detail: tbl.schemaname !== "public" ? tbl.schemaname : null
+        let table = tableCache.find(tbl => {
+          return (isQuotedIdent && tbl.tablename === ident) || (!isQuotedIdent && tbl.tablename.toLocaleLowerCase() == ident.toLocaleLowerCase());
         });
-      });
+
+        if (!table) return items;
+        table.columns.forEach(field => {
+          items.push({
+            label: field.attname,
+            kind: CompletionItemKind.Property,
+            detail: field.data_type
+          });
+        });
+      } else {
+        // probably a table - list the tables
+        tableCache.forEach(table => {
+          items.push({
+            label: table.tablename,
+            kind: CompletionItemKind.Class
+          });
+        });
+      }
       return items;
     }
 
-    let table = tableCache.find(tbl => {
-      return tbl.schemaname == schema.name
-        && (idents[pos].isQuoted && tbl.tablename === idents[pos].name) || (!idents[pos].isQuoted && tbl.tablename.toLocaleLowerCase() == idents[pos].name.toLocaleLowerCase());
-    });
+    if (e.context.triggerCharacter === '.') {
+      let idents = readIdents(iterator, 3);
+      let pos = 0;
 
-    if (table) {
-      table.columns.forEach(field => {
-        items.push({
-          label: field.attname,
-          kind: CompletionItemKind.Property,
-          detail: field.data_type
+      let schema = schemaCache.find(sch => {
+        return (idents[pos].isQuoted && sch.name === idents[pos].name) || (!idents[pos].isQuoted && sch.name.toLocaleLowerCase() == idents[pos].name.toLocaleLowerCase());
+      });
+
+      if (!schema) {
+        schema = schemaCache.find(sch => {
+          return sch.name == "public"
         });
-      });
-    }
-    return items;
-  }
+      } else {
+        pos++;
+      }
 
-  if (!scenarioFound) {
-    schemaCache.forEach(schema => {
-      items.push({
-        label: schema.name,
-        kind: CompletionItemKind.Module
+      if (idents.length == pos) {
+        tableCache.forEach(tbl => {
+          if (tbl.schemaname != schema.name) {
+            return;
+          }
+          items.push({
+            label: tbl.tablename,
+            kind: CompletionItemKind.Class,
+            detail: tbl.schemaname !== "public" ? tbl.schemaname : null
+          });
+        });
+        return items;
+      }
+
+      let table = tableCache.find(tbl => {
+        return tbl.schemaname == schema.name
+          && (idents[pos].isQuoted && tbl.tablename === idents[pos].name) || (!idents[pos].isQuoted && tbl.tablename.toLocaleLowerCase() == idents[pos].name.toLocaleLowerCase());
       });
-    });
-    tableCache.forEach(table => {
-      items.push({
-        label: table.tablename,
-        detail: table.schemaname !== "public" ? table.schemaname : null,
-        kind: table.is_table ? CompletionItemKind.Class : CompletionItemKind.Interface,
-        insertText: table.schemaname == "public" ? table.tablename : table.schemaname + "." + table.tablename
-      });
-      table.columns.forEach(field => {
-        let foundItem = items.find(i => i.label === field.attname && i.kind === CompletionItemKind.Field && i.detail === field.data_type);
-        if (foundItem) {
-          foundItem.tables.push(table.tablename);
-          foundItem.tables.sort();
-          foundItem.documentation = foundItem.tables.join(', ');
-        } else {
+
+      if (table) {
+        table.columns.forEach(field => {
           items.push({
             label: field.attname,
-            kind: CompletionItemKind.Field,
-            detail: field.data_type,
-            documentation: table.tablename,
-            tables: [table.tablename]
+            kind: CompletionItemKind.Property,
+            detail: field.data_type
           });
-        }
+        });
+      }
+      return items;
+    }
+
+    if (!scenarioFound) {
+      schemaCache.forEach(schema => {
+        items.push({
+          label: schema.name,
+          kind: CompletionItemKind.Module
+        });
       });
-    });
-    functionCache.forEach(fn => {
-      items.push({
-        label: fn.name,
-        kind: CompletionItemKind.Function,
-        detail: fn.result_type,
-        documentation: fn.overloads[0].description
+      tableCache.forEach(table => {
+        items.push({
+          label: table.tablename,
+          detail: table.schemaname !== "public" ? table.schemaname : null,
+          kind: table.is_table ? CompletionItemKind.Class : CompletionItemKind.Interface,
+          insertText: table.schemaname == "public" ? table.tablename : table.schemaname + "." + table.tablename
+        });
+        table.columns.forEach(field => {
+          let foundItem = items.find(i => i.label === field.attname && i.kind === CompletionItemKind.Field && i.detail === field.data_type);
+          if (foundItem) {
+            foundItem.tables.push(table.tablename);
+            foundItem.tables.sort();
+            foundItem.documentation = foundItem.tables.join(', ');
+          } else {
+            items.push({
+              label: field.attname,
+              kind: CompletionItemKind.Field,
+              detail: field.data_type,
+              documentation: table.tablename,
+              tables: [table.tablename]
+            });
+          }
+        });
       });
-    });
-    keywordCache.forEach(keyword => {
-      items.push({
-        label: keyword,
-        kind: CompletionItemKind.Keyword
+      functionCache.forEach(fn => {
+        items.push({
+          label: fn.name,
+          kind: CompletionItemKind.Function,
+          detail: fn.result_type,
+          documentation: fn.overloads[0].description
+        });
       });
-    });
-    databaseCache.forEach(database => {
-      items.push({
-        label: database,
-        kind: CompletionItemKind.Module
+      keywordCache.forEach(keyword => {
+        items.push({
+          label: keyword,
+          kind: CompletionItemKind.Keyword
+        });
       });
-    })
-  }
-  return items;
-});
+      databaseCache.forEach(database => {
+        items.push({
+          label: database,
+          kind: CompletionItemKind.Module
+        });
+      })
+    }
+    return items;
+  });
 
-/*
-.dP"Y8 88  dP""b8 88b 88    db    888888 88   88 88""Yb 888888 
-`Ybo." 88 dP   `" 88Yb88   dPYb     88   88   88 88__dP 88__   
-o.`Y8b 88 Yb  "88 88 Y88  dP__Yb    88   Y8   8P 88"Yb  88""   
-8bodP' 88  YboodP 88  Y8 dP""""Yb   88   `YbodP' 88  Yb 888888 
-*/
-connection.onSignatureHelp((positionParams): SignatureHelp => {
-  let document = documents.get(positionParams.textDocument.uri);
-  let activeSignature = null, activeParameter = null, signatures: SignatureInformation[] = [];
-  if (document) {
-    let iterator = new BackwardIterator(document, positionParams.position.character - 1, positionParams.position.line);
+  /*
+  .dP"Y8 88  dP""b8 88b 88    db    888888 88   88 88""Yb 888888 
+  `Ybo." 88 dP   `" 88Yb88   dPYb     88   88   88 88__dP 88__   
+  o.`Y8b 88 Yb  "88 88 Y88  dP__Yb    88   Y8   8P 88"Yb  88""   
+  8bodP' 88  YboodP 88  Y8 dP""""Yb   88   `YbodP' 88  Yb 888888 
+  */
+  connection.onSignatureHelp((positionParams): SignatureHelp => {
+    let document = documents.get(positionParams.textDocument.uri);
+    let activeSignature = null, activeParameter = null, signatures: SignatureInformation[] = [];
+    if (document) {
+      let iterator = new BackwardIterator(document, positionParams.position.character - 1, positionParams.position.line);
 
-    let paramCount = iterator.readArguments();
-    if (paramCount < 0) return null;
+      let paramCount = iterator.readArguments();
+      if (paramCount < 0) return null;
 
-    let ident = iterator.readIdent();
-    if (!ident || ident.match(/^\".*?\"$/)) return null;
+      let ident = iterator.readIdent();
+      if (!ident || ident.match(/^\".*?\"$/)) return null;
 
-    let fn = functionCache.find(f => f.name.toLocaleLowerCase() === ident.toLocaleLowerCase());
-    if (!fn) return null;
+      let fn = functionCache.find(f => f.name.toLocaleLowerCase() === ident.toLocaleLowerCase());
+      if (!fn) return null;
 
-    let overloads = fn.overloads.filter(o => o.args.length >= paramCount);
-    if (!overloads || !overloads.length) return null;
+      let overloads = fn.overloads.filter(o => o.args.length >= paramCount);
+      if (!overloads || !overloads.length) return null;
 
-    overloads.forEach(overload => {
-      signatures.push({
-        label: `${fn.name}( ${overload.args.join(' , ')} )`,
-        documentation: overload.description,
-        parameters: overload.args.map<ParameterInformation>(v => { return { label: v } })
+      overloads.forEach(overload => {
+        signatures.push({
+          label: `${fn.name}( ${overload.args.join(' , ')} )`,
+          documentation: overload.description,
+          parameters: overload.args.map<ParameterInformation>(v => { return { label: v } })
+        });
       });
-    });
 
-    activeSignature = 0;
-    activeParameter = Math.min(paramCount, overloads[0].args.length - 1);
-  }
-  return { signatures, activeSignature, activeParameter };
-});
+      activeSignature = 0;
+      activeParameter = Math.min(paramCount, overloads[0].args.length - 1);
+    }
+    return { signatures, activeSignature, activeParameter };
+  });
+}
 
 function fixQuotedIdent(str: string): string {
   return str.replace(/^\"/, '').replace(/\"$/, '').replace(/\"\"/, '"');

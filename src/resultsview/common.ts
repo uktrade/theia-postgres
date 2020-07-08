@@ -125,14 +125,14 @@ function generateSelectTableResult(result: QueryResults): string {
   return `<table><thead><tr><th></th>` +
     result.fields.map((field) => {
       return `<th><div class="field-name">${field.name}</div><div class="field-type">${field.display_type}</div></th>`;
-    }).join() +
+    }).join('') +
     `</tr></thead><tbody>` +
     result.rows.map((row, rowIndex) => {
       return `<tr><th class="row-header">${++rowIndex}</th>` + result.fields.map((field, idx) => {
         const formatted = formatFieldValue(field, row[idx]);
         return `<td class="${field.format}-field">${formatted ? formatted : ''}</td>`;
-      }).join() + `</tr>`;
-    }).join() + `</tbody></table>`;
+      }).join('') + `</tr>`;
+    }).join('') + `</tbody></table>`;
 }
 
 function formatFieldValue(field: FieldInfo, value: any): string | undefined {

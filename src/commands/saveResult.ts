@@ -1,17 +1,17 @@
 import * as fs from 'fs';
-import * as vscode from 'vscode';
+import * as theia from '@theia/plugin';
 import * as csv from 'csv-stringify';
 import { QueryResults } from "../common/database";
 
-interface SaveTableQuickPickItem extends vscode.QuickPickItem {
+interface SaveTableQuickPickItem extends theia.QuickPickItem {
   readonly index: number;
 }
 
 export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
-  return async function run(uri: vscode.Uri) {
+  return async function run(uri: theia.Uri) {
     let results = getActiveResults();
     if (!results) {
-      vscode.window.showWarningMessage('Unable to save data - dataset not found');
+      theia.window.showWarningMessage('Unable to save data - dataset not found');
       return;
     }
 
@@ -25,18 +25,18 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
         });
       }
 
-      let selected = await vscode.window.showQuickPick(tables);
+      let selected = await theia.window.showQuickPick(tables, {});
       if (!selected) return;
       resultIndex = selected.index;
     }
 
     if (results[resultIndex].rowCount < 1) {
-      vscode.window.showWarningMessage('Unable to save data - table has no data');
+      theia.window.showWarningMessage('Unable to save data - table has no data');
       return;
     }
 
     let formats = ['csv', 'json'];
-    let selFormat = await vscode.window.showQuickPick(formats);
+    let selFormat = await theia.window.showQuickPick(formats, {});
     if (!selFormat) return;
 
     let fileData: string;
@@ -71,7 +71,7 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
       ++index;
     }
     fs.writeFileSync(getPath(), fileData, 'utf8');
-    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getPath()));
+    await theia.window.showTextDocument(await theia.workspace.openTextDocument(getPath()));
   }
 }
 

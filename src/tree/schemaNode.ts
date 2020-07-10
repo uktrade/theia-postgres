@@ -13,7 +13,7 @@ export class SchemaNode implements INode {
     return {
       label: this.schemaName,
       collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
-      contextValue: 'vscode-postgres.tree.schema',
+      contextValue: 'theia-postgres.tree.schema',
       iconPath: {
         light: '/hostedPlugin/dit_theia_postgres/resources/light/schema.svg',
         dark: '/hostedPlugin/dit_theia_postgres/resources/dark/schema.svg'

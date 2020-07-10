@@ -24,7 +24,7 @@ export class ColumnNode implements INode {
       label,
       tooltip,
       collapsibleState: vscode.TreeItemCollapsibleState.None,
-      contextValue: 'vscode-postgres.tree.column',
+      contextValue: 'theia-postgres.tree.column',
       iconPath: {
         light: `/hostedPlugin/dit_theia_postgres/resources/light/${icon}.svg`,
         dark: `/hostedPlugin/dit_theia_postgres/resources/dark/${icon}.svg`

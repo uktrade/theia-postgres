@@ -48,7 +48,7 @@ export function getRunQueryAndDisplayResults(onChangeActive) {
     });
 
     const panel = theia.window.createWebviewPanel(
-      'vscode-postgres.results',
+      'theia-postgres.results',
       'Results: ' + title, {
       area: theia.WebviewPanelTargetArea.Bottom
     }, {

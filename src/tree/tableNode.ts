@@ -18,7 +18,7 @@ export class TableNode implements INode {
     return {
       label: this.table,
       collapsibleState: TreeItemCollapsibleState.Collapsed,
-      contextValue: 'vscode-postgres.tree.table',
+      contextValue: 'theia-postgres.tree.table',
       iconPath: {
         light: `/hostedPlugin/dit_theia_postgres/resources/light/${this.is_table ? 'table' : 'view'}.svg`,
         dark: `/hostedPlugin/dit_theia_postgres/resources/dark/${this.is_table ? 'table' : 'view'}.svg`,

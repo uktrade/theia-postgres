@@ -9,7 +9,7 @@ export class InfoNode implements INode {
     return {
       label: this.label.toString(),
       collapsibleState: vscode.TreeItemCollapsibleState.None,
-      contextValue: 'vscode-postgres.tree.error',
+      contextValue: 'theia-postgres.tree.error',
       iconPath: {
         light: '/hostedPlugin/dit_theia_postgres/resources/light/error.svg',
         dark: '/hostedPlugin/dit_theia_postgres/resources/dark/error.svg'

@@ -20,8 +20,8 @@ export class TableNode implements INode {
       collapsibleState: TreeItemCollapsibleState.Collapsed,
       contextValue: 'vscode-postgres.tree.table',
       iconPath: {
-        light: `/hostedPlugin/ckolkman_vscode_postgres/resources/light/${this.is_table ? 'table' : 'view'}.svg`,
-        dark: `/hostedPlugin/ckolkman_vscode_postgres/resources/dark/${this.is_table ? 'table' : 'view'}.svg`,
+        light: `/hostedPlugin/dit_theia_postgres/resources/light/${this.is_table ? 'table' : 'view'}.svg`,
+        dark: `/hostedPlugin/dit_theia_postgres/resources/dark/${this.is_table ? 'table' : 'view'}.svg`,
       }
     };
   }

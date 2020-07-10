@@ -26,8 +26,8 @@ export class ColumnNode implements INode {
       collapsibleState: vscode.TreeItemCollapsibleState.None,
       contextValue: 'vscode-postgres.tree.column',
       iconPath: {
-        light: `/hostedPlugin/ckolkman_vscode_postgres/resources/light/${icon}.svg`,
-        dark: `/hostedPlugin/ckolkman_vscode_postgres/resources/dark/${icon}.svg`
+        light: `/hostedPlugin/dit_theia_postgres/resources/light/${icon}.svg`,
+        dark: `/hostedPlugin/dit_theia_postgres/resources/dark/${icon}.svg`
       }
     };
   }

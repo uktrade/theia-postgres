@@ -1,13 +1,13 @@
 {
-  "name": "vscode-postgres",
+  "name": "theia-postgres",
   "displayName": "PostgreSQL",
-  "description": "PostgreSQL Management Tool",
-  "version": "1.1.11",
-  "publisher": "ckolkman",
+  "description": "PostgreSQL explorer",
+  "version": "0.0.1",
+  "publisher": "dit",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Borvik/vscode-postgres.git"
+    "url": "https://github.com/uktrade/theia-postgres"
   },
   "keywords": [
     "theia-plugin"

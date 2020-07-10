@@ -11,8 +11,8 @@ export class InfoNode implements INode {
       collapsibleState: vscode.TreeItemCollapsibleState.None,
       contextValue: 'vscode-postgres.tree.error',
       iconPath: {
-        light: '/hostedPlugin/ckolkman_vscode_postgres/resources/light/error.svg',
-        dark: '/hostedPlugin/ckolkman_vscode_postgres/resources/dark/error.svg'
+        light: '/hostedPlugin/dit_theia_postgres/resources/light/error.svg',
+        dark: '/hostedPlugin/dit_theia_postgres/resources/dark/error.svg'
       }
     };
   }

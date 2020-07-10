@@ -1,5 +1,5 @@
 import * as path from 'path';
-import * as vscode from 'vscode';
+import * as theia from '@theia/plugin';
 import { INode } from "./INode";
 import { IColumn } from "./IColumn";
 
@@ -8,7 +8,7 @@ export class ColumnNode implements INode {
   constructor(private readonly column: IColumn) { }
 
   public async getChildren(): Promise<INode[]> { return []; }
-  public getTreeItem(): vscode.TreeItem {
+  public getTreeItem(): theia.TreeItem {
     let icon = 'column';
     let label = `${this.column.column_name} : ${this.column.data_type}`;
     let tooltip = label;
@@ -23,7 +23,7 @@ export class ColumnNode implements INode {
     return {
       label,
       tooltip,
-      collapsibleState: vscode.TreeItemCollapsibleState.None,
+      collapsibleState: theia.TreeItemCollapsibleState.None,
       contextValue: 'theia-postgres.tree.column',
       iconPath: {
         light: `/hostedPlugin/dit_theia_postgres/resources/light/${icon}.svg`,

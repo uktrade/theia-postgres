@@ -1,8 +1,7 @@
-import * as theia from 'path';
+import * as theia from '@theia/plugin';
 import * as path from 'path';
 import { INode } from "./INode";
 import { Pool, Client } from 'pg';
-import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { InfoNode } from './infoNode';
 import { ColumnNode } from './columnNode';
 
@@ -14,10 +13,10 @@ export class TableNode implements INode {
     public readonly is_table: boolean,
     public readonly schema: string) { }
 
-  public getTreeItem(): TreeItem {
+  public getTreeItem(): theia.TreeItem {
     return {
       label: this.table,
-      collapsibleState: TreeItemCollapsibleState.Collapsed,
+      collapsibleState: theia.TreeItemCollapsibleState.Collapsed,
       contextValue: 'theia-postgres.tree.table',
       iconPath: {
         light: `/hostedPlugin/dit_theia_postgres/resources/light/${this.is_table ? 'table' : 'view'}.svg`,

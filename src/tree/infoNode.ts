@@ -1,14 +1,14 @@
 import * as path from 'path';
-import * as vscode from 'vscode';
+import * as theia from '@theia/plugin';
 import { INode } from './INode';
 
 export class InfoNode implements INode {
   constructor(private readonly label: string) { }
 
-  public getTreeItem(): vscode.TreeItem {
+  public getTreeItem(): theia.TreeItem {
     return {
       label: this.label.toString(),
-      collapsibleState: vscode.TreeItemCollapsibleState.None,
+      collapsibleState: theia.TreeItemCollapsibleState.None,
       contextValue: 'theia-postgres.tree.error',
       iconPath: {
         light: '/hostedPlugin/dit_theia_postgres/resources/light/error.svg',

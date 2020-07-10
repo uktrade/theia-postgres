@@ -1,5 +1,5 @@
 import * as path from 'path';
-import * as vscode from 'vscode';
+import * as theia from '@theia/plugin';
 import { Pool } from 'pg';
 import { INode } from "./INode";
 import { TableNode } from "./tableNode";
@@ -9,10 +9,10 @@ export class SchemaNode implements INode {
 
   constructor(private readonly pool: Pool, private readonly schemaName: string) { }
 
-  public getTreeItem(): vscode.TreeItem {
+  public getTreeItem(): theia.TreeItem {
     return {
       label: this.schemaName,
-      collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+      collapsibleState: theia.TreeItemCollapsibleState.Collapsed,
       contextValue: 'theia-postgres.tree.schema',
       iconPath: {
         light: '/hostedPlugin/dit_theia_postgres/resources/light/schema.svg',

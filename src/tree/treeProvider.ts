@@ -1,12 +1,12 @@
-import * as vscode from 'vscode';
+import * as theia from '@theia/plugin';
 import { INode } from './INode';
 import { Pool } from 'pg';
 import { SchemaNode } from './schemaNode';
 
-export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode> {
+export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<INode> {
 
-  public _onDidChangeTreeData: vscode.EventEmitter<INode> = new vscode.EventEmitter<INode>();
-  public readonly onDidChangeTreeData: vscode.Event<INode> = this._onDidChangeTreeData.event;
+  public _onDidChangeTreeData: theia.EventEmitter<INode> = new theia.EventEmitter<INode>();
+  public readonly onDidChangeTreeData: theia.Event<INode> = this._onDidChangeTreeData.event;
 
   constructor(public pool: Pool) { }
 
@@ -14,7 +14,7 @@ export class PostgreSQLTreeDataProvider implements vscode.TreeDataProvider<INode
     this._onDidChangeTreeData.fire();
   }
 
-  public getTreeItem(element: INode): Promise<vscode.TreeItem> | vscode.TreeItem {
+  public getTreeItem(element: INode): Promise<theia.TreeItem> | theia.TreeItem {
     return element.getTreeItem();
   }
 

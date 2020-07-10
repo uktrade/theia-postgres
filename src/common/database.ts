@@ -1,5 +1,4 @@
 import * as theia from '@theia/plugin';
-import * as vscode from 'vscode';
 import { Pool, QueryResult, FieldDef } from 'pg';
 import { generateResultsHtml, getResultsBody } from '../resultsview/common';
 
@@ -22,14 +21,14 @@ export interface TypeResults extends QueryResult {
 }
 
 export function getRunQueryAndDisplayResults(onChangeActive) {
-  return async function runQueryAndDisplayResults(sql: string, pool: Pool, uri: vscode.Uri, title: string) {
+  return async function runQueryAndDisplayResults(sql: string, pool: Pool, uri: theia.Uri, title: string) {
     const typeNamesQuery = `select oid, format_type(oid, typtypmod) as display_type, typname from pg_type`;
 
     try {
       var types: TypeResults = await pool.query(typeNamesQuery);
       var res: QueryResult | QueryResult[] = await pool.query({ text: sql, rowMode: 'array' });
     } catch (err) {
-      vscode.window.showErrorMessage(err.message);
+      theia.window.showErrorMessage(err.message);
       return;
     }
 

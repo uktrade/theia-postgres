@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import * as vscode from 'vscode';
+import * as theia from '@theia/plugin';
 
 export function getNewQueryCommand() {
   return async function run(treeNode: any) {
@@ -12,6 +12,6 @@ export function getNewQueryCommand() {
     }
 
     fs.writeFileSync(getPath(), '', 'utf8')
-    await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getPath()));
+    await theia.window.showTextDocument(await theia.workspace.openTextDocument(getPath()));
   }
 }

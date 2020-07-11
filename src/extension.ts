@@ -40,7 +40,7 @@ export async function start(context: theia.PluginContext) {
     }
     theia.commands.executeCommand('setContext', 'theiaPostgresResultFocus', numActive > 0);
   }
-  const runQueryAndDisplayResults = getRunQueryAndDisplayResults(onChangeActive);
+  const runQueryAndDisplayResults = getRunQueryAndDisplayResults(pool, onChangeActive);
 
   // The "state" of the WebView is simply the HTML of the body. Doesn't allow to save after
   // a refresh of the page, but KISS for now
@@ -52,7 +52,7 @@ export async function start(context: theia.PluginContext) {
 
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.newQuery', getNewQueryCommand()));
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.refresh', getRefreshCommand(tree)));
-  context.subscriptions.push(theia.commands.registerCommand('theia-postgres.runQuery', getRunCommand(pool, runQueryAndDisplayResults)));
+  context.subscriptions.push(theia.commands.registerCommand('theia-postgres.runQuery', getRunCommand(runQueryAndDisplayResults)));
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.saveResult', getSaveResultCommand(() => activeResults)));
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.selectTop', getSelectTopCommand(runQueryAndDisplayResults)));
 

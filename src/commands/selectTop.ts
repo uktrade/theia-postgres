@@ -32,6 +32,6 @@ export function getSelectTopCommand(runQueryAndDisplayResults) {
     await theia.window.showTextDocument(textDocument);
 
     const title = path.basename(textDocument.fileName);
-    return runQueryAndDisplayResults(sql, treeNode.pool, textDocument.uri, title);
+    return runQueryAndDisplayResults(sql, textDocument.uri, title);
   }
 }

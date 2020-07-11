@@ -20,8 +20,8 @@ export interface TypeResults extends QueryResult {
   rows: TypeResult[];
 }
 
-export function getRunQueryAndDisplayResults(onChangeActive) {
-  return async function runQueryAndDisplayResults(sql: string, pool: Pool, uri: theia.Uri, title: string) {
+export function getRunQueryAndDisplayResults(pool: Pool, onChangeActive) {
+  return async function runQueryAndDisplayResults(sql: string, uri: theia.Uri, title: string) {
     const typeNamesQuery = `select oid, format_type(oid, typtypmod) as display_type, typname from pg_type`;
 
     try {

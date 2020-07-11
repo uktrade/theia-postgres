@@ -3,7 +3,7 @@ import { Pool, Client } from 'pg';
 
 
 interface Node {
-  getTreeItem(): Promise<theia.TreeItem> | theia.TreeItem;
+  getTreeItem(): theia.TreeItem;
   getChildren(): Promise<Node[]> | Node[];
 }
 

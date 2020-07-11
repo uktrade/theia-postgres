@@ -68,8 +68,12 @@
       },
       {
         "command": "theia-postgres.refresh",
-        "title": "Refresh Items",
-        "category": "PostgreSQL"
+        "title": "Refresh",
+        "category": "PostgreSQL",
+        "icon": {
+          "light": "./resources/light/refresh.svg",
+          "dark": "./resources/dark/refresh.svg"
+        }
       },
       {
         "command": "theia-postgres.selectTop",
@@ -114,9 +118,14 @@
       ],
       "view/title": [
         {
-          "command": "theia-postgres.newQuery",
+          "command": "theia-postgres.refresh",
           "when": "view == postgres",
           "group": "navigation@1"
+        },
+        {
+          "command": "theia-postgres.newQuery",
+          "when": "view == postgres",
+          "group": "navigation@2"
         }
       ],
       "commandPalette": [
@@ -150,31 +159,6 @@
           "command": "theia-postgres.selectTop",
           "when": "view == postgres && viewItem == theia-postgres.tree.table",
           "group": "inline"
-        },
-        {
-          "command": "theia-postgres.refresh",
-          "when": "view == postgres && viewItem == theia-postgres.tree.schema",
-          "group": "postgres@1"
-        },
-        {
-          "command": "theia-postgres.refresh",
-          "when": "view == postgres && viewItem == theia-postgres.tree.database",
-          "group": "postgres@1"
-        },
-        {
-          "command": "theia-postgres.refresh",
-          "when": "view == postgres && viewItem == theia-postgres.tree.table",
-          "group": "postgres@1"
-        },
-        {
-          "command": "theia-postgres.refresh",
-          "when": "view == postgres && viewItem == theia-postgres.tree.function-folder",
-          "group": "postgres@1"
-        },
-        {
-          "command": "theia-postgres.selectTop",
-          "when": "view == postgres && viewItem == theia-postgres.tree.table",
-          "group": "postgres@2"
         }
       ]
     },

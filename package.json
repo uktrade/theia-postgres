@@ -49,32 +49,6 @@
         "path": "./syntaxes/pgsql.tmLanguage"
       }
     ],
-    "configuration": {
-      "type": "object",
-      "title": "PostgreSQL",
-      "properties": {
-        "theia-postgres.showExplorer": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show or hide the database explorer."
-        },
-        "theia-postgres.prettyPrintJSONfields": {
-          "type": "boolean",
-          "default": false,
-          "description": "Turns on/off pretty printing of JSON fields"
-        },
-        "theia-postgres.intervalFormat": {
-          "type": "string",
-          "enum": [
-            "iso_8601",
-            "humanize",
-            "succinct"
-          ],
-          "default": "iso_8601",
-          "description": "Controls the display format for `interval` columns. Default is the iso_8601 standard which does not cover milliseconds."
-        }
-      }
-    },
     "keybindings": [
       {
         "command": "theia-postgres.runQuery",

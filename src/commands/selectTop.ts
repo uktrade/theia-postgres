@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as theia from '@theia/plugin';
-import { TableNode } from "../tree/tableNode";
+import { TableNode } from "../tree/treeProvider";
 import { Client } from 'pg';
 
 

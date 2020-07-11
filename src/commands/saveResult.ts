@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as theia from '@theia/plugin';
 import * as csv from 'csv-stringify';
-import { QueryResults } from "../database";
+import { QueryResults } from "../results";
 
 interface SaveTableQuickPickItem extends theia.QuickPickItem {
   readonly index: number;

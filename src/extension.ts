@@ -1,8 +1,7 @@
 import * as theia from '@theia/plugin';
 import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree';
-import { generateResultsHtml } from './resultsview/common';
-import { getRunQueryAndDisplayResults, QueryResults } from './database';
+import { generateResultsHtml, getRunQueryAndDisplayResults, QueryResults } from './results';
 
 import { IConnectionConfig } from "./types";
 import { Pool } from 'pg';

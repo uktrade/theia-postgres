@@ -36,7 +36,7 @@ export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<Node> 
     this._onDidChangeTreeData.fire();
   }
 
-  public getTreeItem(element: Node): Promise<theia.TreeItem> | theia.TreeItem {
+  public getTreeItem(element: Node): theia.TreeItem {
     return element.getTreeItem();
   }
 

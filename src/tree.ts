@@ -4,7 +4,7 @@ import { Pool, Client } from 'pg';
 
 interface Node {
   getTreeItem(): theia.TreeItem;
-  getChildren(): Promise<Node[]> | Node[];
+  getChildren(): Promise<Node[]>;
 }
 
 
@@ -235,5 +235,5 @@ class InfoNode implements Node {
       }
     };
   }
-  public getChildren(): Node[] { return []; }
+  public async getChildren(): Promise<Node[]> { return []; }
 }

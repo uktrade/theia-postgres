@@ -1,6 +1,6 @@
 import * as theia from '@theia/plugin';
 import { Pool, QueryResult, FieldDef } from 'pg';
-import { generateResultsHtml, getResultsBody } from '../resultsview/common';
+import { generateResultsHtml, getResultsBody } from './resultsview/common';
 
 export interface FieldInfo extends FieldDef {
   display_type: string;

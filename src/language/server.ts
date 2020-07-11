@@ -8,7 +8,7 @@ import {
 import { Client, ClientConfig } from 'pg';
 import * as fs from 'fs';
 import { Validator } from './validator';
-import { IConnectionConfig } from '../common/IConnectionConfig';
+import { IConnectionConfig } from '../types';
 import { BackwardIterator } from './backwordIterator';
 
 export interface ISetConnection {

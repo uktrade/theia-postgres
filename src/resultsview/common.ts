@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { QueryResults, FieldInfo } from '../common/database';
+import { QueryResults, FieldInfo } from '../database';
 
 export function generateResultsHtml(resultsBody: string) {
   const nonce = randomBytes(16).toString('base64');

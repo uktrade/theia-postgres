@@ -21,7 +21,7 @@ interface Column {
   column_name: string;
   data_type: string;
   primary_key: boolean;
-  foreign_key?: ForeignKey;
+  foreign_key: ForeignKey;
 }
 
 

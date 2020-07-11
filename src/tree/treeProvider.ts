@@ -7,6 +7,7 @@ interface INode {
   getChildren(): Promise<INode[]> | INode[];
 }
 
+
 interface IForeignKey {
   constraint: string,
   catalog: string,
@@ -15,12 +16,14 @@ interface IForeignKey {
   column: string
 }
 
+
 interface IColumn {
   column_name: string;
   data_type: string;
   primary_key: boolean;
   foreign_key?: IForeignKey;
 }
+
 
 export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<INode> {
 
@@ -186,6 +189,7 @@ export class TableNode implements INode {
   }
 }
 
+
 class ColumnNode implements INode {
 
   constructor(private readonly column: IColumn) { }
@@ -215,6 +219,7 @@ class ColumnNode implements INode {
     };
   }
 }
+
 
 class InfoNode implements INode {
   constructor(private readonly label: string) { }

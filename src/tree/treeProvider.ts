@@ -2,13 +2,13 @@ import * as theia from '@theia/plugin';
 import { Pool, Client } from 'pg';
 
 
-interface INode {
+interface Node {
   getTreeItem(): Promise<theia.TreeItem> | theia.TreeItem;
-  getChildren(): Promise<INode[]> | INode[];
+  getChildren(): Promise<Node[]> | Node[];
 }
 
 
-interface IForeignKey {
+interface ForeignKey {
   constraint: string,
   catalog: string,
   schema: string,
@@ -17,18 +17,18 @@ interface IForeignKey {
 }
 
 
-interface IColumn {
+interface Column {
   column_name: string;
   data_type: string;
   primary_key: boolean;
-  foreign_key?: IForeignKey;
+  foreign_key?: ForeignKey;
 }
 
 
-export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<INode> {
+export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<Node> {
 
-  public _onDidChangeTreeData: theia.EventEmitter<INode> = new theia.EventEmitter<INode>();
-  public readonly onDidChangeTreeData: theia.Event<INode> = this._onDidChangeTreeData.event;
+  public _onDidChangeTreeData: theia.EventEmitter<Node> = new theia.EventEmitter<Node>();
+  public readonly onDidChangeTreeData: theia.Event<Node> = this._onDidChangeTreeData.event;
 
   constructor(public pool: Pool) { }
 
@@ -36,11 +36,11 @@ export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<INode>
     this._onDidChangeTreeData.fire();
   }
 
-  public getTreeItem(element: INode): Promise<theia.TreeItem> | theia.TreeItem {
+  public getTreeItem(element: Node): Promise<theia.TreeItem> | theia.TreeItem {
     return element.getTreeItem();
   }
 
-  public async getChildren(element?: INode): Promise<INode[]> {
+  public async getChildren(element?: Node): Promise<Node[]> {
     if (element) {
       return element.getChildren();
     }
@@ -61,7 +61,7 @@ export class PostgreSQLTreeDataProvider implements theia.TreeDataProvider<INode>
 }
 
 
-class SchemaNode implements INode {
+class SchemaNode implements Node {
 
   constructor(private readonly pool: Pool, private readonly schemaName: string) { }
 
@@ -77,7 +77,7 @@ class SchemaNode implements INode {
     };
   }
 
-  public async getChildren(): Promise<INode[]> {
+  public async getChildren(): Promise<Node[]> {
     try {
       return (await this.pool.query(`
         SELECT
@@ -106,7 +106,7 @@ class SchemaNode implements INode {
   }
 }
 
-export class TableNode implements INode {
+export class TableNode implements Node {
 
   constructor(
     public readonly pool: Pool,
@@ -126,7 +126,7 @@ export class TableNode implements INode {
     };
   }
 
-  public async getChildren(): Promise<INode[]> {
+  public async getChildren(): Promise<Node[]> {
     const sql = `SELECT
         a.attname as column_name,
         format_type(a.atttypid, a.atttypmod) as data_type,
@@ -190,11 +190,11 @@ export class TableNode implements INode {
 }
 
 
-class ColumnNode implements INode {
+class ColumnNode implements Node {
 
-  constructor(private readonly column: IColumn) { }
+  constructor(private readonly column: Column) { }
 
-  public async getChildren(): Promise<INode[]> { return []; }
+  public async getChildren(): Promise<Node[]> { return []; }
   public getTreeItem(): theia.TreeItem {
     let icon = 'column';
     let label = `${this.column.column_name} : ${this.column.data_type}`;
@@ -221,7 +221,7 @@ class ColumnNode implements INode {
 }
 
 
-class InfoNode implements INode {
+class InfoNode implements Node {
   constructor(private readonly label: string) { }
 
   public getTreeItem(): theia.TreeItem {
@@ -235,5 +235,5 @@ class InfoNode implements INode {
       }
     };
   }
-  public getChildren(): INode[] { return []; }
+  public getChildren(): Node[] { return []; }
 }

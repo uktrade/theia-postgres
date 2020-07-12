@@ -99,7 +99,39 @@ export function generateResultsHtml(resultsBody: string) {
     <head>
       <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
       <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'">
-      ${getStyles(nonce)}
+      <style nonce="${nonce}">
+        body {
+          margin: 0;
+          padding: 0;
+        }
+
+        pre.vscode-postgres-result {
+          margin: 5px;
+        }
+
+        .field-type {
+          font-size: smaller;
+        }
+        
+        table {
+          border-collapse: collapse;
+        }
+        
+        th, td {
+          border-width: 1px;
+          border-style: solid;
+          border-color: var(--vscode-panel-border);
+          padding: 3px 5px;
+        }
+        
+        .timestamptz-field { white-space: nowrap; }
+
+        .result-divider {
+          padding: 0;
+          border: none;
+          border-top: medium double var(--vscode-panel-border);
+        }
+      </style>
       <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
         window.addEventListener('DOMContentLoaded', (event) => {
@@ -111,42 +143,6 @@ export function generateResultsHtml(resultsBody: string) {
       ${resultsBody}
     </body>
   </html>`;
-}
-
-function getStyles(nonce: string) {
-  return `<style nonce="${nonce}">
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
-    pre.vscode-postgres-result {
-      margin: 5px;
-    }
-
-    .field-type {
-      font-size: smaller;
-    }
-    
-    table {
-      border-collapse: collapse;
-    }
-    
-    th, td {
-      border-width: 1px;
-      border-style: solid;
-      border-color: var(--vscode-panel-border);
-      padding: 3px 5px;
-    }
-    
-    .timestamptz-field { white-space: nowrap; }
-
-    .result-divider {
-      padding: 0;
-      border: none;
-      border-top: medium double var(--vscode-panel-border);
-    }
-  </style>`;
 }
 
 export function getResultsBody(results: QueryResults[]): string {

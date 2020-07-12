@@ -20,8 +20,48 @@ export interface TypeResults extends QueryResult {
   rows: TypeResult[];
 }
 
-export function getRunQueryAndDisplayResults(pool: Pool, onChangeActive) {
-  return async function runQueryAndDisplayResults(sql: string, uri: theia.Uri, title: string) {
+export function getRunQueryAndDisplayResults(pool: Pool) {
+
+  // The "save" button that appears with results is a bit faffy to maintain due to the order
+  // that multiple panels fire their change events when tabbling between.
+  var numActive: number = 0;
+  var activeResults: QueryResults[];
+  function onChangeActive(isActive: boolean, results: QueryResults[]) {
+    numActive = numActive + (isActive ? 1 : -1);
+    if (isActive) {
+      activeResults = results;
+    }
+    theia.commands.executeCommand('setContext', 'theiaPostgresResultFocus', numActive > 0);
+  }
+
+  function createPanel(title: string, results: QueryResults[]) {
+    const panel = theia.window.createWebviewPanel(
+      'theia-postgres.results',
+      'Results: ' + title, {
+      area: theia.WebviewPanelTargetArea.Bottom,
+    }, {
+      enableScripts: true
+    });
+
+    var isActive = false;
+    panel.onDidChangeViewState(({ webviewPanel }) => {
+      var changed = webviewPanel.active !== isActive;
+      isActive = webviewPanel.active;
+      if (changed) onChangeActive(webviewPanel.active, results);
+    });
+
+    panel.webview.html = generateResultsHtml(getResultsBody(results));
+  }
+
+  // The "state" of the WebView is simply the HTML of the body. Doesn't allow to save after
+  // a refresh of the page, but KISS for now
+  theia.window.registerWebviewPanelSerializer('theia-postgres.results', new (class implements theia.WebviewPanelSerializer {
+    async deserializeWebviewPanel(webviewPanel: theia.WebviewPanel, state: any) {
+      webviewPanel.webview.html = generateResultsHtml(state.body);
+    }
+  }));
+
+  async function runQueryAndDisplayResults(sql: string, uri: theia.Uri, title: string) {
     const typeNamesQuery = `select oid, format_type(oid, typtypmod) as display_type, typname from pg_type`;
 
     try {
@@ -46,23 +86,10 @@ export function getRunQueryAndDisplayResults(pool: Pool, onChangeActive) {
       };
     });
 
-    const panel = theia.window.createWebviewPanel(
-      'theia-postgres.results',
-      'Results: ' + title, {
-      area: theia.WebviewPanelTargetArea.Bottom
-    }, {
-      enableScripts: true
-    });
-
-    var isActive = false;
-    panel.onDidChangeViewState(({ webviewPanel }) => {
-      var changed = webviewPanel.active !== isActive;
-      isActive = webviewPanel.active;
-      if (changed) onChangeActive(webviewPanel.active, results);
-    });
-
-    panel.webview.html = generateResultsHtml(getResultsBody(results));
+    createPanel(title, results);
   }
+
+  return { runQueryAndDisplayResults: runQueryAndDisplayResults, getActiveResults: () => activeResults };
 }
 
 export function generateResultsHtml(resultsBody: string) {

@@ -1,7 +1,7 @@
 import * as theia from '@theia/plugin';
 import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree';
-import { generateResultsHtml, getRunQueryAndDisplayResults, QueryResults } from './results';
+import { getRunQueryAndDisplayResults } from './results';
 
 import { IConnectionConfig } from "./types";
 import { Pool } from 'pg';
@@ -28,31 +28,11 @@ export async function start(context: theia.PluginContext) {
   const tree = new PostgreSQLTreeDataProvider(pool);
   context.subscriptions.push(theia.window.registerTreeDataProvider('postgres', tree));
 
-  // The "save" button that appears with results is a bit faffy to maintain due to the order
-  // that multiple panels fire their change events when tabbling between.
-  var numActive: number = 0;
-  var activeResults: QueryResults[];
-  function onChangeActive(isActive: boolean, results: QueryResults[]) {
-    numActive = numActive + (isActive ? 1 : -1);
-    if (isActive) {
-      activeResults = results;
-    }
-    theia.commands.executeCommand('setContext', 'theiaPostgresResultFocus', numActive > 0);
-  }
-  const runQueryAndDisplayResults = getRunQueryAndDisplayResults(pool, onChangeActive);
-
-  // The "state" of the WebView is simply the HTML of the body. Doesn't allow to save after
-  // a refresh of the page, but KISS for now
-  theia.window.registerWebviewPanelSerializer('theia-postgres.results', new (class implements theia.WebviewPanelSerializer {
-    async deserializeWebviewPanel(webviewPanel: theia.WebviewPanel, state: any) {
-      webviewPanel.webview.html = generateResultsHtml(state.body);
-    }
-  }));
-
+  const { runQueryAndDisplayResults, getActiveResults } = getRunQueryAndDisplayResults(pool);
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.newQuery', getNewQueryCommand()));
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.refresh', getRefreshCommand(tree)));
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.runQuery', getRunCommand(runQueryAndDisplayResults)));
-  context.subscriptions.push(theia.commands.registerCommand('theia-postgres.saveResult', getSaveResultCommand(() => activeResults)));
+  context.subscriptions.push(theia.commands.registerCommand('theia-postgres.saveResult', getSaveResultCommand(getActiveResults)));
   context.subscriptions.push(theia.commands.registerCommand('theia-postgres.selectTop', getSelectTopCommand(runQueryAndDisplayResults)));
 
   await setupPostgresLanguageClient(context, connectionConfig);

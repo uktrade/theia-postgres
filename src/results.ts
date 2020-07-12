@@ -52,8 +52,7 @@ export function getRunQueryAndDisplayResults(pool: Pool, onChangeActive) {
       area: theia.WebviewPanelTargetArea.Bottom
     }, {
       enableScripts: true
-    }
-    );
+    });
 
     var isActive = false;
     panel.onDidChangeViewState(({ webviewPanel }) => {

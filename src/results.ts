@@ -194,7 +194,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
         if (rows.length) {
           setTimeout(() => {
             process.nextTick(fetchRows);
-          }, 5000);
+          }, 500);
         }
         else onEnd();
       });

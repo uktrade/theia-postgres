@@ -186,7 +186,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
           rows: rows.map((row) => {
             var obj = {};
             row.forEach((val, index) => {
-              obj[index] = val;
+              obj[index] = formatFieldValue(cursor._result.fields[index], val);
             });
             return obj;
           }),
@@ -297,89 +297,17 @@ function summaryHtml(results: QueryResults): string {
   }
 }
 
-function headerHtml(results: QueryResults) {
-  return `<tr><th></th>` +
-    results.fields.map((field) => {
-      return `<th><div class="field-name">${field.name}</div><div class="field-type">${field.display_type}</div></th>`;
-    }).join('') +
-    `</tr>`;
-}
-
-function rowsHtml(result: QueryResults, offset: number): string {
-  return result.rows.map((row, rowIndex) => {
-    return `<tr><th>${offset + ++rowIndex}</th>` + result.fields.map((field, idx) => {
-      const formatted = formatFieldValue(field, row[idx]);
-      return `<td>${formatted ? formatted : ''}</td>`;
-    }).join('') + `</tr>`;
-  }).join('');
-}
-
 function getRowCountResult(rowCount: number, text: string): string {
   return `Rows ${text}: ${rowCount}`;
 }
 
-function formatFieldValue(field: FieldInfo, value: any): string | undefined {
-  if (value === null) return `<i>null</i>`;
+function formatFieldValue(field: FieldInfo, value: any): number | string | Date {
+  if (value === null) return value;
   if (typeof value === typeof undefined) return '';
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return value;
+  if (value instanceof Date) return value;
 
-  let canTruncate: boolean = false;
-  switch (field.format) {
-    case 'interval':
-      value = formatInterval(value); break;
-    case 'json':
-    case 'jsonb':
-    case 'point':
-    case 'circle':
-      value = JSON.stringify(value);
-    case 'timestamptz': value = value.toJSON().toString(); break;
-    case 'text': canTruncate = true; break;
-    default:
-      value = value.toString();
-  }
-  let formatted = htmlEntities(value);
-  if (canTruncate) {
-    if (formatted && formatted.length > 150)
-      formatted = formatted.substring(0, 148) + '&hellip;';
-  }
-  return formatted;
-}
-
-function htmlEntities(str: string): string | undefined {
-  if (typeof str !== 'string') return str;
-  return str ? str.replace(/[\u00A0-\u9999<>\&"']/gim, (i) => `&#${i.charCodeAt(0)};`) : undefined;
-}
-
-function formatInterval(value: any): string {
-  let keys: string[] = ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds'];
-  let is_negative = false;
-  for (let key of keys) {
-    if (!value.hasOwnProperty(key))
-      value[key] = 0;
-    else if (value[key] < 0) {
-      is_negative = true;
-      value[key] = Math.abs(value[key]);
-    }
-  }
-
-  return formatIntervalISO(value, is_negative);
-}
-
-function formatIntervalISO(value: any, is_negative: boolean): string {
-  let iso = 'P';
-  if (value.years) iso += value.years.toString() + 'Y';
-  if (value.months) iso += value.months.toString() + 'M';
-  if (value.days) iso += value.days.toString() + 'D';
-
-  if (iso === 'P' || (value.hours || value.minutes || value.seconds))
-    iso += 'T';
-
-  if (value.hours) iso += value.hours.toString() + 'H';
-  if (value.minutes) iso += value.minutes.toString() + 'M';
-
-  if (!value.hasOwnProperty('seconds')) value.seconds = 0;
-  if (value.milliseconds) value.seconds += (value.milliseconds / 1000);
-
-  if (value.seconds) iso += value.seconds.toString() + 'S';
-  if (iso === 'PT') iso += '0S';
-  return (is_negative ? '-' : '') + iso;
+  // Not sure what is best in the general case
+  return JSON.stringify(value);
 }

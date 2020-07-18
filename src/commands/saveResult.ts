@@ -46,7 +46,7 @@ export function getSaveResultCommand(getActiveResults: () => QueryResults[]) {
     } else if (selFormat === 'csv') {
       let columns: any = {};
       results[resultIndex].fields.forEach(field => {
-        columns[field.name] = field.name
+        columns[field.index] = field.name
       });
 
       fileData = await new Promise<string>((resolve) => {

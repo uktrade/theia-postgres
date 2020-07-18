@@ -5,6 +5,9 @@ import * as Cursor from 'pg-cursor';
 
 interface FieldInfo extends FieldDef {
   display_type: string;
+  // tabulator needs data as a dict, which won't play well with multiple
+  // columns of the same name. So we have a dict of indexes to fake an array
+  index: string;
 };
 
 export interface QueryResults extends QueryResult {
@@ -150,7 +153,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     const client = await pool.connect();
 
     try {
-      var cursor = client.query(new Cursor(sql, [], { text: sql }));
+      var cursor = client.query(new Cursor(sql, [], { text: sql, rowMode: 'array' }));
     } catch (err) {
       theia.window.showErrorMessage(err.message);
       return;
@@ -180,11 +183,18 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
 
         const results = {
           ...cursor._result,
-          rows: rows,
-          fields: cursor._result.fields.map((field) => {
+          rows: rows.map((row) => {
+            var obj = {};
+            row.forEach((val, index) => {
+              obj[index] = val;
+            });
+            return obj;
+          }),
+          fields: cursor._result.fields.map((field, index) => {
             const type = types.rows.find((t) => t.oid === field.dataTypeID);
             return {
               ...field,
+              index: '' + index,
               display_type: type.display_type
             };
           })
@@ -256,7 +266,7 @@ export function panelHtml(panelId: string) {
               table = new Tabulator("#results-table", {
                 height: "100%",
                 columns: [{formatter:"rownum", align:"right", width:40}].concat(message.results.fields.map((field) => {
-                  return {title:field.name, field:field.name, headerSort:false};
+                  return {title:field.name, field: field.index, headerSort:false};
                 })),
                 data: message.results.rows
               });

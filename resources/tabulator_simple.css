@@ -130,3 +130,7 @@
 .tabulator-cell:first-child > .tabulator-col-resize-handle.prev {
   display: none;
 }
+
+.error {
+  padding: 20px;
+}

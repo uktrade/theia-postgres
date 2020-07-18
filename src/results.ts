@@ -244,6 +244,13 @@ export function panelHtml(panelId: string) {
         window.addEventListener('message', event => {
           const message = event.data;
 
+          if (message.command == 'ERROR') {
+            var tableEl = document.getElementById('results-table');
+            tableEl.innerHTML = message.summary;
+            tableEl.classList.add('error');
+            return;
+          }
+
           if (message.command == null || message.command == 'SELECT' || message.command == 'EXPLAIN') {
             if (!table) {
               table = new Tabulator("#results-table", {

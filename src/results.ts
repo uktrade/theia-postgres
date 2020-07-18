@@ -253,15 +253,16 @@ export function panelHtml(panelId: string) {
         var table;
         window.addEventListener('message', event => {
           const message = event.data;
+          const expectingRows = message.command == null || message.command == 'SELECT' || message.command == 'EXPLAIN';
 
-          if (message.command == 'ERROR') {
+          if (message.command == 'ERROR' || !expectingRows) {
             var tableEl = document.getElementById('results-table');
             tableEl.innerHTML = message.summary;
             tableEl.classList.add('error');
             return;
           }
 
-          if (message.command == null || message.command == 'SELECT' || message.command == 'EXPLAIN') {
+          if (expectingRows) {
             if (!table) {
               table = new Tabulator("#results-table", {
                 height: "100%",

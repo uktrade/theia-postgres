@@ -193,7 +193,7 @@
     "@types/keytar": "^4.0.1",
     "@types/mocha": "^2.2.42",
     "@types/node": "^14.0.14",
-    "@types/pg": "^7.4.10",
+    "@types/pg": "^7.14.4",
     "@theia/plugin": "latest",
     "@theia/plugin-packager": "latest",
     "rimraf": "2.6.2",
@@ -203,7 +203,8 @@
   },
   "dependencies": {
     "csv-stringify": "^3.1.1",
-    "pg": "^7.4.3",
+    "pg": "^8.3.0",
+    "pg-cursor": "^2.3.0",
     "vscode-languageclient": "^4.4.2",
     "vscode-languageserver": "^4.4.2"
   }

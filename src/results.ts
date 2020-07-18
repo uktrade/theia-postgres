@@ -36,10 +36,11 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
   // that multiple panels fire their change events when tabbling between. And it's still not
   // perfect because it appears in too many places in the UI
   var numActive: number = 0;
-  var getActiveResults = () => undefined;
+  var activeResults: QueryResults = undefined;
+  var getActiveResults = () => [activeResults];
   var panelResults: Panels = {};
 
-  function createPanel(title: string, panelGetResults: () => QueryResults, onDidDispose: () => void) {
+  function createPanel(title: string, onDidDispose: () => void) {
     var isActive = false;
     const panelId = randomBytes(16).toString('hex');
 
@@ -69,7 +70,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
       isActive = webviewPanel.active;
       numActive = numActive + (webviewPanel.active ? 1 : -1);
       if (webviewPanel.active) {
-        getActiveResults = panelGetResults;
+        activeResults = panelResults[panelId].fullResults;
       }
       theia.commands.executeCommand('setContext', 'theiaPostgresResultFocus', numActive > 0);
     });
@@ -161,9 +162,8 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
       });
     }
 
-    const panelGetResults = () => null;
     var disposed = false;
-    const { panelId, panel } = createPanel(title, panelGetResults, () => { disposed = true });
+    const { panelId, panel } = createPanel(title, () => { disposed = true });
 
     function fetchRows() {
       cursor.read(5000, (err, rows) => {

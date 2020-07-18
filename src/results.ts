@@ -120,8 +120,8 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     panel.webview.postMessage({
       'command': fullResults.command,
       'summary': summaryHtml(fullResults),
-      'header': headerHtml(fullResults),
-      'results': rowsHtml(results, previousRowsLength)
+      'results': results,
+      'offset': previousRowsLength,
     });
   }
 
@@ -149,7 +149,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     const client = await pool.connect();
 
     try {
-      var cursor = client.query(new Cursor(sql, [], { text: sql, rowMode: 'array' }));
+      var cursor = client.query(new Cursor(sql, [], { text: sql }));
     } catch (err) {
       theia.window.showErrorMessage(err.message);
       return;
@@ -166,7 +166,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     const { panelId, panel } = createPanel(title, panelGetResults, () => { disposed = true });
 
     function fetchRows() {
-      cursor.read(1000, (err, rows) => {
+      cursor.read(5000, (err, rows) => {
         if (disposed) {
           onEnd();
           return
@@ -191,7 +191,11 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
         };
         recordResults(panelId, panel, results);
 
-        if (rows.length) process.nextTick(fetchRows);
+        if (rows.length) {
+          setTimeout(() => {
+            process.nextTick(fetchRows);
+          }, 5000);
+        }
         else onEnd();
       });
     }
@@ -207,90 +211,53 @@ export function panelHtml(panelId: string) {
   return `<!DOCTYPE html>
   <html>
     <head>
-      <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'">
+      <meta http-equiv="content-type" content="text/html;charset=UTF-8">
+      <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}'">
+      <link href="/hostedPlugin/dit_theia_postgres/resources/tabulator_simple.css" rel="stylesheet">
+      <script src="/hostedPlugin/dit_theia_postgres/resources/tabulator.min.js"></script>
       <style nonce="${nonce}">
-        body {
+        body,
+        html {
           margin: 0;
           padding: 0;
-        }
-
-        pre.vscode-postgres-result {
-          margin: 5px;
-        }
-
-        .field-type {
-          font-size: smaller;
-        }
-
-        table {
-          border-collapse: collapse;
-          table-layout: fixed;
-          transform: translate3d(0, 0, 0);
-        }
-
-        th, td {
-          border-width: 1px;
-          border-style: solid;
-          border-color: var(--vscode-panel-border);
-          padding: 3px 5px;
-          text-align: left;
-        }
-
-        tr {
-          height: 2em;
-        }
-
-        .hidden {
-          display: none;
+          height: 100%;
         }
       </style>
     </head>
     <body class="vscode-body">
-      <pre id="results-summary" class="vscode-postgres-result"></pre>
-      <table id="results-table" class="hidden">
-        <thead id="results-table-thead"></thead>
-        <tbody id="results-table-tbody"></tbody>
-      </table>
+      <div id="results-table"></div>
       <script nonce="${nonce}">
         const vscode = acquireVsCodeApi();
+
         var state = vscode.getState({panelId: "${panelId}"});
         if (state) {
+          // If we have a state, request the server to re-send the data
           vscode.postMessage({
             command: 'restore',
           });
         } else {
+          // If no state, save the state so it will be available to be restored
           vscode.setState({panelId: "${panelId}"});
         }
 
-        const summaryEl = document.getElementById('results-summary');
-        const tableEl = document.getElementById('results-table');
-        const theadEl = document.getElementById('results-table-thead');
-        const tbodyEl = document.getElementById('results-table-tbody');
-
+        var table;
         window.addEventListener('message', event => {
           const message = event.data;
+
           if (message.command == null || message.command == 'SELECT' || message.command == 'EXPLAIN') {
-            tableEl.classList.remove('hidden');
-          }
-          setSummary(message.summary);
-          setHeader(message.header);
-          appendResults(message.results);
+            if (!table) {
+              table = new Tabulator("#results-table", {
+                height: "100%",
+                columns: [{formatter:"rownum", align:"right", width:40}].concat(message.results.fields.map((field) => {
+                  return {title:field.name, field:field.name, headerSort:false};
+                })),
+                data: message.results.rows
+              });
+            } else {
+              table.addData(message.results.rows);
+            }
+          }  
         });
-
-        function setSummary(summary) {
-          if (summaryEl.innerHTML == summary) return;
-          summaryEl.innerHTML = summary;
-        }
-
-        function setHeader(header) {
-          if (theadEl.innerHTML == header) return;
-          theadEl.innerHTML = header;
-        }
-
-        function appendResults(results) {
-          tbodyEl.insertAdjacentHTML('beforeend', results);
-        }
       </script>
     </body>
   </html>`;

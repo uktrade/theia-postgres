@@ -1,8 +1,9 @@
 import * as theia from '@theia/plugin';
 import { randomBytes } from 'crypto';
 import { Pool, QueryResult, FieldDef } from 'pg';
+import * as Cursor from 'pg-cursor';
 
-export interface FieldInfo extends FieldDef {
+interface FieldInfo extends FieldDef {
   display_type: string;
 };
 
@@ -10,31 +11,38 @@ export interface QueryResults extends QueryResult {
   fields: FieldInfo[];
 };
 
-export interface TypeResult {
+interface TypeResult {
   oid: number;
   typname: string;
   display_type: string;
 };
 
-export interface TypeResults extends QueryResult {
+interface TypeResults extends QueryResult {
   rows: TypeResult[];
+}
+
+interface Panels {
+  [id: string]: PanelWithResult,
+}
+
+interface PanelWithResult {
+  err: any,
+  fullResults: QueryResults
 }
 
 export function getRunQueryAndDisplayResults(pool: Pool) {
 
   // The "save" button that appears with results is a bit faffy to maintain due to the order
-  // that multiple panels fire their change events when tabbling between.
+  // that multiple panels fire their change events when tabbling between. And it's still not
+  // perfect because it appears in too many places in the UI
   var numActive: number = 0;
-  var activeResults: QueryResults[];
-  function onChangeActive(isActive: boolean, results: QueryResults[]) {
-    numActive = numActive + (isActive ? 1 : -1);
-    if (isActive) {
-      activeResults = results;
-    }
-    theia.commands.executeCommand('setContext', 'theiaPostgresResultFocus', numActive > 0);
-  }
+  var getActiveResults = () => undefined;
+  var panelResults: Panels = {};
 
-  function createPanel(title: string, results: QueryResults[]) {
+  function createPanel(title: string, panelGetResults: () => QueryResults, onDidDispose: () => void) {
+    var isActive = false;
+    const panelId = randomBytes(16).toString('hex');
+
     const panel = theia.window.createWebviewPanel(
       'theia-postgres.results',
       'Results: ' + title, {
@@ -43,56 +51,158 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
       enableScripts: true
     });
 
-    var isActive = false;
+    panelResults[panelId] = {
+      err: null,
+      fullResults: {
+        fields: [],
+        rows: [],
+        command: null,
+        rowCount: null,
+        oid: null
+      }
+    }
+
     panel.onDidChangeViewState(({ webviewPanel }) => {
       var changed = webviewPanel.active !== isActive;
+      if (!changed) return;
+
       isActive = webviewPanel.active;
-      if (changed) onChangeActive(webviewPanel.active, results);
+      numActive = numActive + (webviewPanel.active ? 1 : -1);
+      if (webviewPanel.active) {
+        getActiveResults = panelGetResults;
+      }
+      theia.commands.executeCommand('setContext', 'theiaPostgresResultFocus', numActive > 0);
     });
 
-    panel.webview.html = generateResultsHtml(getResultsBody(results));
+    panel.webview.onDidReceiveMessage(
+      message => {
+        if (panelResults[panelId].err) {
+          postError(panel, panelResults[panelId].err);
+        } else {
+          postResults(panel, panelResults[panelId].fullResults, panelResults[panelId].fullResults, 0);
+        }
+      }
+    );
+
+    panel.webview.html = panelHtml(panelId);
+
+    panel.onDidDispose(() => {
+      onDidDispose();
+      delete panelResults[panelId];
+    });
+    return { panelId, panel };
   }
 
-  // The "state" of the WebView is simply the HTML of the body. Doesn't allow to save after
-  // a refresh of the page, but KISS for now
+  function recordError(panelId: string, panel: theia.WebviewPanel, err) {
+    panelResults[panelId].err = err;
+    postError(panel, err);
+  }
+
+  function postError(panel, err) {
+    panel.webview.postMessage({
+      'command': 'ERROR',
+      'summary': err.message,
+      'header': '',
+      'results': ''
+    });
+  }
+
+  function recordResults(panelId: string, panel: theia.WebviewPanel, results: QueryResults) {
+    const previousRowsLength = panelResults[panelId].fullResults.rows.length;
+    panelResults[panelId].fullResults = {
+      ...results,
+      rows: panelResults[panelId].fullResults.rows.concat(results.rows),
+    };
+    postResults(panel, panelResults[panelId].fullResults, results, previousRowsLength);
+  }
+
+  function postResults(panel: theia.WebviewPanel, fullResults: QueryResults, results: QueryResults, previousRowsLength) {
+    panel.webview.postMessage({
+      'command': fullResults.command,
+      'summary': summaryHtml(fullResults),
+      'header': headerHtml(fullResults),
+      'results': rowsHtml(results, previousRowsLength)
+    });
+  }
+
   theia.window.registerWebviewPanelSerializer('theia-postgres.results', new (class implements theia.WebviewPanelSerializer {
     async deserializeWebviewPanel(webviewPanel: theia.WebviewPanel, state: any) {
-      webviewPanel.webview.html = generateResultsHtml(state.body);
+      webviewPanel.webview.html = (state.panelId in panelResults) ? panelHtml(state.panelId) : '<p>The query must be re-run to see its results</p>';
     }
   }));
 
   async function runQueryAndDisplayResults(sql: string, uri: theia.Uri, title: string) {
-    const typeNamesQuery = `select oid, format_type(oid, typtypmod) as display_type, typname from pg_type`;
+    // Results are streamed to the WebView using postMessage to append to its HTML. In addition
+    // to seeing results sooner, it avoid memory issues since it seems like setting a panel HTML to
+    // a very long string is not expected in a plugin
+    //
+    // The HTML itself is generated on the server
 
+    const typeNamesQuery = 'select oid, format_type(oid, typtypmod) as display_type, typname from pg_type';
     try {
       var types: TypeResults = await pool.query(typeNamesQuery);
-      var res: QueryResult | QueryResult[] = await pool.query({ text: sql, rowMode: 'array' });
     } catch (err) {
       theia.window.showErrorMessage(err.message);
       return;
     }
 
-    const rawResults: QueryResult[] = Array.isArray(res) ? res : [res];
-    const results: QueryResults[] = rawResults.map((result) => {
-      return {
-        ...result,
-        fields: result.fields.map((field) => {
-          const type = types.rows.find((t) => t.oid === field.dataTypeID);
-          return {
-            ...field,
-            display_type: type.display_type
-          };
-        })
-      };
-    });
+    const client = await pool.connect();
 
-    createPanel(title, results);
+    try {
+      var cursor = client.query(new Cursor(sql, [], { text: sql, rowMode: 'array' }));
+    } catch (err) {
+      theia.window.showErrorMessage(err.message);
+      return;
+    }
+
+    function onEnd() {
+      cursor.close(() => {
+        client.release();
+      });
+    }
+
+    const panelGetResults = () => null;
+    var disposed = false;
+    const { panelId, panel } = createPanel(title, panelGetResults, () => { disposed = true });
+
+    function fetchRows() {
+      cursor.read(1000, (err, rows) => {
+        if (disposed) {
+          onEnd();
+          return
+        }
+
+        if (err) {
+          recordError(panelId, panel, err);
+          onEnd();
+          return;
+        }
+
+        const results = {
+          ...cursor._result,
+          rows: rows,
+          fields: cursor._result.fields.map((field) => {
+            const type = types.rows.find((t) => t.oid === field.dataTypeID);
+            return {
+              ...field,
+              display_type: type.display_type
+            };
+          })
+        };
+        recordResults(panelId, panel, results);
+
+        if (rows.length) process.nextTick(fetchRows);
+        else onEnd();
+      });
+    }
+
+    fetchRows();
   }
 
-  return { runQueryAndDisplayResults: runQueryAndDisplayResults, getActiveResults: () => activeResults };
+  return { runQueryAndDisplayResults: runQueryAndDisplayResults, getActiveResults: getActiveResults };
 }
 
-export function generateResultsHtml(resultsBody: string) {
+export function panelHtml(panelId: string) {
   const nonce = randomBytes(16).toString('base64');
   return `<!DOCTYPE html>
   <html>
@@ -112,114 +222,115 @@ export function generateResultsHtml(resultsBody: string) {
         .field-type {
           font-size: smaller;
         }
-        
+
         table {
           border-collapse: collapse;
+          table-layout: fixed;
+          transform: translate3d(0, 0, 0);
         }
-        
+
         th, td {
           border-width: 1px;
           border-style: solid;
           border-color: var(--vscode-panel-border);
           padding: 3px 5px;
+          text-align: left;
         }
-        
-        .timestamptz-field { white-space: nowrap; }
 
-        .result-divider {
-          padding: 0;
-          border: none;
-          border-top: medium double var(--vscode-panel-border);
+        tr {
+          height: 2em;
+        }
+
+        .hidden {
+          display: none;
         }
       </style>
-      <script nonce="${nonce}">
-        const vscode = acquireVsCodeApi();
-        window.addEventListener('DOMContentLoaded', (event) => {
-          vscode.setState({'body': document.body.innerHTML});
-        });
-      </script>
     </head>
     <body class="vscode-body">
-      ${resultsBody}
+      <pre id="results-summary" class="vscode-postgres-result"></pre>
+      <table id="results-table" class="hidden">
+        <thead id="results-table-thead"></thead>
+        <tbody id="results-table-tbody"></tbody>
+      </table>
+      <script nonce="${nonce}">
+        const vscode = acquireVsCodeApi();
+        var state = vscode.getState({panelId: "${panelId}"});
+        if (state) {
+          vscode.postMessage({
+            command: 'restore',
+          });
+        } else {
+          vscode.setState({panelId: "${panelId}"});
+        }
+
+        const summaryEl = document.getElementById('results-summary');
+        const tableEl = document.getElementById('results-table');
+        const theadEl = document.getElementById('results-table-thead');
+        const tbodyEl = document.getElementById('results-table-tbody');
+
+        window.addEventListener('message', event => {
+          const message = event.data;
+          if (message.command == null || message.command == 'SELECT' || message.command == 'EXPLAIN') {
+            tableEl.classList.remove('hidden');
+          }
+          setSummary(message.summary);
+          setHeader(message.header);
+          appendResults(message.results);
+        });
+
+        function setSummary(summary) {
+          if (summaryEl.innerHTML == summary) return;
+          summaryEl.innerHTML = summary;
+        }
+
+        function setHeader(header) {
+          if (theadEl.innerHTML == header) return;
+          theadEl.innerHTML = header;
+        }
+
+        function appendResults(results) {
+          tbodyEl.insertAdjacentHTML('beforeend', results);
+        }
+      </script>
     </body>
   </html>`;
 }
 
-export function getResultsBody(results: QueryResults[]): string {
-  let html = '', first = true;
-  for (const result of results) {
-    if (!first)
-      html += '<hr class="result-divider" />'
-    switch (result.command) {
-      case 'INSERT': html += generateInsertResults(result); break;
-      case 'UPDATE': html += generateUpdateResults(result); break;
-      case 'CREATE': html += generateCreateResults(result); break;
-      case 'DELETE': html += generateDeleteResults(result); break;
-      case 'EXPLAIN': html += generateExplainResult(result); break;
-      case 'SELECT': html += generateSelectResult(result); break;
-      default:
-        html += generateGenericResult(result);
-        break;
-    }
-    first = false;
+function summaryHtml(results: QueryResults): string {
+  // command is only returned on the end of the query, and its null otherwise.
+  switch (results.command) {
+    case 'SELECT':
+    case null:
+      return getRowCountResult(results.rows.length, 'returned'); break;
+    case 'UPDATE': return getRowCountResult(results.rowCount, 'updated'); break;
+    case 'DELETE': return getRowCountResult(results.rowCount, 'deleted'); break;
+    case 'INSERT': return getRowCountResult(results.rowCount, 'inserted'); break;
+    case 'CREATE': return getRowCountResult(results.rowCount, 'created'); break;
+    case 'EXPLAIN': return getRowCountResult(results.rows.length, 'in plan'); break;
+    default:
+      return JSON.stringify(results);
   }
-  return html;
 }
 
-function generateInsertResults(result: QueryResults): string {
-  let html = getRowCountResult(result.rowCount, 'inserted', 'insert');
-  if (result.fields && result.fields.length && result.rows && result.rows.length)
-    html += generateSelectTableResult(result);
-  return html;
-}
-
-function generateUpdateResults(result: QueryResults): string {
-  let html = getRowCountResult(result.rowCount, 'updated', 'update');
-  if (result.fields && result.fields.length && result.rows && result.rows.length)
-    html += generateSelectTableResult(result);
-  return html;
-}
-
-function generateCreateResults(result: QueryResults): string {
-  return getRowCountResult(result.rowCount, 'created', 'create');
-}
-
-function generateDeleteResults(result: QueryResults): string {
-  let html = getRowCountResult(result.rowCount, 'deleted', 'delete');
-  if (result.fields && result.fields.length && result.rows && result.rows.length)
-    html += generateSelectTableResult(result);
-  return html;
-}
-
-function getRowCountResult(rowCount: number, text: string, preClass: string): string {
-  let rowOrRows = rowCount === 1 ? 'row' : 'rows';
-  return `<pre class="vscode-postgres-result vscode-postgres-result-${preClass}">${rowCount} ${rowOrRows} ${text}</pre>`;
-}
-
-function generateExplainResult(result: QueryResults): string {
-  return `<pre class="vscode-postgres-result vscode-postgres-result-explain">${result.rows.join("\n")}</pre>`;
-}
-
-function generateGenericResult(result: QueryResults): string {
-  return `<pre class="vscode-postgres-result vscode-postgres-result-generic">${JSON.stringify(result)}</pre>`;
-}
-
-function generateSelectResult(result: QueryResults): string {
-  return getRowCountResult(result.rowCount, 'returned', 'select') + generateSelectTableResult(result);
-}
-
-function generateSelectTableResult(result: QueryResults): string {
-  return `<table><thead><tr><th></th>` +
-    result.fields.map((field) => {
+function headerHtml(results: QueryResults) {
+  return `<tr><th></th>` +
+    results.fields.map((field) => {
       return `<th><div class="field-name">${field.name}</div><div class="field-type">${field.display_type}</div></th>`;
     }).join('') +
-    `</tr></thead><tbody>` +
-    result.rows.map((row, rowIndex) => {
-      return `<tr><th class="row-header">${++rowIndex}</th>` + result.fields.map((field, idx) => {
-        const formatted = formatFieldValue(field, row[idx]);
-        return `<td class="${field.format}-field">${formatted ? formatted : ''}</td>`;
-      }).join('') + `</tr>`;
-    }).join('') + `</tbody></table>`;
+    `</tr>`;
+}
+
+function rowsHtml(result: QueryResults, offset: number): string {
+  return result.rows.map((row, rowIndex) => {
+    return `<tr><th>${offset + ++rowIndex}</th>` + result.fields.map((field, idx) => {
+      const formatted = formatFieldValue(field, row[idx]);
+      return `<td>${formatted ? formatted : ''}</td>`;
+    }).join('') + `</tr>`;
+  }).join('');
+}
+
+function getRowCountResult(rowCount: number, text: string): string {
+  return `Rows ${text}: ${rowCount}`;
 }
 
 function formatFieldValue(field: FieldInfo, value: any): string | undefined {
@@ -253,7 +364,6 @@ function htmlEntities(str: string): string | undefined {
   return str ? str.replace(/[\u00A0-\u9999<>\&"']/gim, (i) => `&#${i.charCodeAt(0)};`) : undefined;
 }
 
-// #region "Format Interval"
 function formatInterval(value: any): string {
   let keys: string[] = ['years', 'months', 'days', 'hours', 'minutes', 'seconds', 'milliseconds'];
   let is_negative = false;
@@ -270,7 +380,6 @@ function formatInterval(value: any): string {
 }
 
 function formatIntervalISO(value: any, is_negative: boolean): string {
-  //{"days":4107,"hours":5,"minutes":56,"seconds":17,"milliseconds":681}
   let iso = 'P';
   if (value.years) iso += value.years.toString() + 'Y';
   if (value.months) iso += value.months.toString() + 'M';

@@ -5,5 +5,5 @@ export interface IConnectionConfig {
   readonly password: string;
   readonly port: number;
   readonly database: string;
-  readonly ssl: boolean;
+  readonly ssl: boolean | object;
 }

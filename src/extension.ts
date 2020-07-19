@@ -19,9 +19,11 @@ export async function start(context: theia.PluginContext) {
     host: credentials.match(/host=([a-z0-9_\-\.]+)/)![1],
     user: credentials.match(/user=([a-z0-9_]+)/)![1],
     port: parseInt(credentials.match(/port=(\d+)/)![1]),
-    ssl: credentials.match(/sslmode=([a-z\-]+)/)![1] == 'require',
+    ssl: credentials.match(/sslmode=([a-z\-]+)/)![1] == 'require' ? {
+      rejectUnauthorized: false
+    } : false,
     database: credentials.match(/dbname=([a-z0-9_\-]+)/)![1],
-    password: credentials.match(/password=([a-zA-Z0-9_]+)/)![1]
+    password: credentials.match(/password=([a-zA-Z0-9_]+)/)![1],
   };
   const pool = new Pool(connectionConfig);
 

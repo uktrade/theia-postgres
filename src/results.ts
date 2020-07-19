@@ -203,6 +203,27 @@ export function panelHtml(panelId: string) {
     <body class="vscode-body">
       <div id="results-table"></div>
       <script nonce="${nonce}">
+        // Avoid multiple additions of data
+        const Queue = (concurrency) => {
+          var running = 0;
+          const tasks = [];
+
+          return async (task) => {
+            tasks.push(task);
+            if (running >= concurrency) return;
+
+            ++running;
+            while (tasks.length) {
+                try {
+                    await tasks.shift()();
+                } catch(err) {
+                    console.error(err);
+                }
+            }
+            --running;
+          }
+        }
+        var queue = Queue(1);
         const vscode = acquireVsCodeApi();
 
         var state = vscode.getState({panelId: "${panelId}"});
@@ -217,28 +238,33 @@ export function panelHtml(panelId: string) {
         }
 
         var table;
+        var allData = [];
         window.addEventListener('message', event => {
-          const message = event.data;
+          queue(async () => {
+            const message = event.data;
 
-          if (message.summary) {
-            var tableEl = document.getElementById('results-table');
-            tableEl.innerHTML = message.summary;
-            tableEl.classList.add('error');
-          }
-
-          if (message.results.fields.length) {
-            if (!table) {
-              table = new Tabulator("#results-table", {
-                height: "100%",
-                columns: [{formatter:"rownum", align:"right", width:40}].concat(message.results.fields.map((field) => {
-                  return {title:field.name, field: field.index, headerSort:false};
-                })),
-                data: message.results.rows
-              });
-            } else {
-              table.addData(message.results.rows);
+            if (message.summary) {
+              var tableEl = document.getElementById('results-table');
+              tableEl.innerHTML = message.summary;
+              tableEl.classList.add('error');
             }
-          }  
+
+            if (message.results.fields.length) {
+              // Tabulator has an addData method, but is very slow
+              if (!table) {
+                table = new Tabulator("#results-table", {
+                  height: "100%",
+                  columns: [{formatter:"rownum", align:"right", width:40}].concat(message.results.fields.map((field) => {
+                    return {title:field.name, field: field.index, headerSort:false};
+                  })),
+                  data: []
+                });
+              }
+              allData = allData.concat(message.results.rows);
+              const renderInPosition = true;
+              await table.rowManager.setData(allData, renderInPosition);
+            }
+          });
         });
       </script>
     </body>

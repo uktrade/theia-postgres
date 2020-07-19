@@ -4,7 +4,6 @@ import { Pool, QueryResult, FieldDef } from 'pg';
 import * as Cursor from 'pg-cursor';
 
 interface FieldInfo extends FieldDef {
-  display_type: string;
   // tabulator needs data as a dict, which won't play well with multiple
   // columns of the same name. So we have a dict of indexes to fake an array
   index: string;
@@ -136,20 +135,6 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
   }));
 
   async function runQueryAndDisplayResults(sql: string, uri: theia.Uri, title: string) {
-    // Results are streamed to the WebView using postMessage to append to its HTML. In addition
-    // to seeing results sooner, it avoid memory issues since it seems like setting a panel HTML to
-    // a very long string is not expected in a plugin
-    //
-    // The HTML itself is generated on the server
-
-    const typeNamesQuery = 'select oid, format_type(oid, typtypmod) as display_type, typname from pg_type';
-    try {
-      var types: TypeResults = await pool.query(typeNamesQuery);
-    } catch (err) {
-      theia.window.showErrorMessage(err.message);
-      return;
-    }
-
     const client = await pool.connect();
 
     try {
@@ -190,22 +175,16 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
             });
             return obj;
           }),
-          fields: cursor._result.fields.map((field, index) => {
-            const type = types.rows.find((t) => t.oid === field.dataTypeID);
+          fields: cursor._result.fields.map<FieldInfo>((field, index) => {
             return {
               ...field,
-              index: '' + index,
-              display_type: type.display_type
+              index: '' + index
             };
           })
         };
         recordResults(panelId, panel, results);
 
-        if (rows.length) {
-          setTimeout(() => {
-            process.nextTick(fetchRows);
-          }, 500);
-        }
+        if (rows.length) process.nextTick(fetchRows);
         else onEnd();
       });
     }

@@ -13,16 +13,6 @@ export interface QueryResults extends QueryResult {
   fields: FieldInfo[];
 };
 
-interface TypeResult {
-  oid: number;
-  typname: string;
-  display_type: string;
-};
-
-interface TypeResults extends QueryResult {
-  rows: TypeResult[];
-}
-
 interface Panels {
   [id: string]: PanelWithResult,
 }

@@ -95,8 +95,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     panel.webview.postMessage({
       'command': 'ERROR',
       'summary': err.message,
-      'header': '',
-      'results': ''
+      'results': null
     });
   }
 
@@ -111,8 +110,8 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
   function postResults(panel: theia.WebviewPanel, fullResults: QueryResults, results: QueryResults) {
     panel.webview.postMessage({
       'command': fullResults.command,
-      'summary': summaryHtml(fullResults),
-      'results': results,
+      'summary': summary(fullResults),
+      'results': results
     });
   }
 
@@ -220,16 +219,14 @@ export function panelHtml(panelId: string) {
         var table;
         window.addEventListener('message', event => {
           const message = event.data;
-          const expectingRows = message.command == null || message.command == 'SELECT' || message.command == 'EXPLAIN';
 
-          if (message.command == 'ERROR' || !expectingRows) {
+          if (message.summary) {
             var tableEl = document.getElementById('results-table');
             tableEl.innerHTML = message.summary;
             tableEl.classList.add('error');
-            return;
           }
 
-          if (expectingRows) {
+          if (message.results.fields.length) {
             if (!table) {
               table = new Tabulator("#results-table", {
                 height: "100%",
@@ -248,20 +245,12 @@ export function panelHtml(panelId: string) {
   </html>`;
 }
 
-function summaryHtml(results: QueryResults): string {
-  // command is only returned on the end of the query, and its null otherwise.
-  switch (results.command) {
-    case 'SELECT':
-    case null:
-      return getRowCountResult(results.rows.length, 'returned'); break;
-    case 'UPDATE': return getRowCountResult(results.rowCount, 'updated'); break;
-    case 'DELETE': return getRowCountResult(results.rowCount, 'deleted'); break;
-    case 'INSERT': return getRowCountResult(results.rowCount, 'inserted'); break;
-    case 'CREATE': return getRowCountResult(results.rowCount, 'created'); break;
-    case 'EXPLAIN': return getRowCountResult(results.rows.length, 'in plan'); break;
-    default:
-      return JSON.stringify(results);
-  }
+function summary(results: QueryResults): string {
+  return (
+    results.command === 'GRANT' ? 'Done: Access granted' :
+      results.command === 'ALTER' ? 'Done: Altered' :
+        results.command === 'CREATE' ? 'Done: Created' : ''
+  )
 }
 
 function getRowCountResult(rowCount: number, text: string): string {

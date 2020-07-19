@@ -141,7 +141,10 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     const { panelId, panel } = createPanel(title, () => { disposed = true });
 
     function fetchRows() {
-      cursor.read(5000, (err, rows) => {
+      // Intermediate WebSockets proxies can have a limit on message size
+      // For very wide results this might still be too big, so potentially
+      // need something more robust. Note that results are doubly JSON encoded
+      cursor.read(1000, (err, rows) => {
         if (disposed) {
           onEnd();
           return

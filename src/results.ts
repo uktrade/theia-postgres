@@ -82,7 +82,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
         if (panelResults[panelId].err) {
           postError(panel, panelResults[panelId].err);
         } else {
-          postResults(panel, panelResults[panelId].fullResults, panelResults[panelId].fullResults, 0);
+          postResults(panel, panelResults[panelId].fullResults, panelResults[panelId].fullResults);
         }
       }
     );
@@ -111,20 +111,18 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
   }
 
   function recordResults(panelId: string, panel: theia.WebviewPanel, results: QueryResults) {
-    const previousRowsLength = panelResults[panelId].fullResults.rows.length;
     panelResults[panelId].fullResults = {
       ...results,
       rows: panelResults[panelId].fullResults.rows.concat(results.rows),
     };
-    postResults(panel, panelResults[panelId].fullResults, results, previousRowsLength);
+    postResults(panel, panelResults[panelId].fullResults, results);
   }
 
-  function postResults(panel: theia.WebviewPanel, fullResults: QueryResults, results: QueryResults, previousRowsLength) {
+  function postResults(panel: theia.WebviewPanel, fullResults: QueryResults, results: QueryResults) {
     panel.webview.postMessage({
       'command': fullResults.command,
       'summary': summaryHtml(fullResults),
       'results': results,
-      'offset': previousRowsLength,
     });
   }
 

@@ -253,10 +253,6 @@ function summary(results: QueryResults): string {
   )
 }
 
-function getRowCountResult(rowCount: number, text: string): string {
-  return `Rows ${text}: ${rowCount}`;
-}
-
 function formatFieldValue(field: FieldInfo, value: any): number | string | Date {
   if (value === null) return value;
   if (typeof value === typeof undefined) return '';

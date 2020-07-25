@@ -95,24 +95,30 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     panel.webview.postMessage({
       'command': 'ERROR',
       'summary': err.message,
-      'results': null
+      'rows': [],
+      'fields': null
     });
   }
 
-  function recordResults(panelId: string, panel: theia.WebviewPanel, results: QueryResults) {
+  async function recordResults(panelId: string, panel: theia.WebviewPanel, results: QueryResults) {
     panelResults[panelId].fullResults = {
       ...results,
       rows: panelResults[panelId].fullResults.rows.concat(results.rows),
     };
-    postResults(panel, panelResults[panelId].fullResults, results);
+    await postResults(panel, panelResults[panelId].fullResults, results);
   }
 
-  function postResults(panel: theia.WebviewPanel, fullResults: QueryResults, results: QueryResults) {
-    panel.webview.postMessage({
-      'command': fullResults.command,
-      'summary': summary(fullResults),
-      'results': results
-    });
+  async function postResults(panel: theia.WebviewPanel, fullResults: QueryResults, results: QueryResults) {
+    const maxLength = 500;
+    for (let i = 0; i < results.rows.length; i += maxLength) {
+      await sleep(1);
+      panel.webview.postMessage({
+        'command': fullResults.command,
+        'summary': summary(fullResults),
+        'fields': results.fields,
+        'rows': results.rows.slice(i, i + maxLength)
+      });
+    }
   }
 
   theia.window.registerWebviewPanelSerializer('theia-postgres.results', new (class implements theia.WebviewPanelSerializer {
@@ -140,43 +146,43 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
     var disposed = false;
     const { panelId, panel } = createPanel(title, () => { disposed = true });
 
-    function fetchRows() {
+    async function fetchRows() {
       // Intermediate WebSockets proxies can have a limit on message size
       // For very wide results this might still be too big, so potentially
       // need something more robust. Note that results are doubly JSON encoded
-      cursor.read(1000, (err, rows) => {
-        if (disposed) {
-          onEnd();
-          return
-        }
+      try {
+        var rows = await read(cursor, 500);
+      } catch (err) {
+        recordError(panelId, panel, err);
+        onEnd();
+        return;
+      }
 
-        if (err) {
-          recordError(panelId, panel, err);
-          onEnd();
-          return;
-        }
+      if (disposed) {
+        onEnd();
+        return
+      }
 
-        const results = {
-          ...cursor._result,
-          rows: rows.map((row) => {
-            var obj = {};
-            row.forEach((val, index) => {
-              obj[index] = formatFieldValue(cursor._result.fields[index], val);
-            });
-            return obj;
-          }),
-          fields: cursor._result.fields.map<FieldInfo>((field, index) => {
-            return {
-              ...field,
-              index: '' + index
-            };
-          })
-        };
-        recordResults(panelId, panel, results);
+      const results = {
+        ...cursor._result,
+        rows: rows.map((row) => {
+          var obj = {};
+          row.forEach((val, index) => {
+            obj[index] = formatFieldValue(cursor._result.fields[index], val);
+          });
+          return obj;
+        }),
+        fields: cursor._result.fields.map<FieldInfo>((field, index) => {
+          return {
+            ...field,
+            index: '' + index
+          };
+        })
+      };
+      await recordResults(panelId, panel, results);
 
-        if (rows.length) process.nextTick(fetchRows);
-        else onEnd();
-      });
+      if (rows.length) process.nextTick(fetchRows);
+      else onEnd();
     }
 
     fetchRows();
@@ -252,18 +258,18 @@ export function panelHtml(panelId: string) {
               tableEl.classList.add('error');
             }
 
-            if (message.results.fields.length) {
+            if (message.fields.length) {
               // Tabulator has an addData method, but is very slow
               if (!table) {
                 table = new Tabulator("#results-table", {
                   height: "100%",
-                  columns: [{formatter:"rownum", align:"right", width:40}].concat(message.results.fields.map((field) => {
+                  columns: [{formatter:"rownum", align:"right", width:40}].concat(message.fields.map((field) => {
                     return {title:field.name, field: field.index, headerSort:false};
                   })),
                   data: []
                 });
               }
-              allData = allData.concat(message.results.rows);
+              allData = allData.concat(message.rows);
               const renderInPosition = true;
               await table.rowManager.setData(allData, renderInPosition);
             }
@@ -291,4 +297,19 @@ function formatFieldValue(field: FieldInfo, value: any): number | string | Date 
 
   // Not sure what is best in the general case
   return JSON.stringify(value);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  })
+}
+
+function read(cursor, maxRows): Promise<Array<any>> {
+  return new Promise((resolve, reject) => {
+    cursor.read(500, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
 }

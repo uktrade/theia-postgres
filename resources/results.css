@@ -1,0 +1,72 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.results {
+  height: 100%;
+  user-select: none;
+  overflow: hidden;
+}
+
+.content:focus {
+  outline: none;
+}
+
+.row {
+  white-space: nowrap;
+}
+
+.row-header {
+  overflow: hidden;
+}
+
+.scroll {
+  /* Subtract header height, border and padding */
+  height: calc(100% - 1.5em - 4px - 8px);
+  overflow: auto;
+}
+
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+}
+
+.handle:hover {
+  cursor: ew-resize;
+}
+
+.handle-right {
+  left: 0;
+}
+
+.handle-left {
+  right: 0;
+}
+
+.cell {
+  display: inline-block;
+  position: relative;
+  padding: 4px;
+  height: 1.5em;
+  line-height: 1.5em;
+  border-right: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell-header {
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: 3px solid var(--vscode-panel-border);
+}
+
+.error {
+  padding: 15px;
+}

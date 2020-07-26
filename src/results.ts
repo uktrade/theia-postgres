@@ -165,13 +165,7 @@ export function getRunQueryAndDisplayResults(pool: Pool) {
 
       const results = {
         ...cursor._result,
-        rows: rows.map((row) => {
-          var obj = {};
-          row.forEach((val, index) => {
-            obj[index] = formatFieldValue(cursor._result.fields[index], val);
-          });
-          return obj;
-        }),
+        rows: rows,
         fields: cursor._result.fields.map<FieldInfo>((field, index) => {
           return {
             ...field,
@@ -197,85 +191,13 @@ export function panelHtml(panelId: string) {
   <html>
     <head>
       <meta http-equiv="content-type" content="text/html;charset=UTF-8">
-      <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}'">
-      <link href="/hostedPlugin/dit_theia_postgres/resources/tabulator_simple.css" rel="stylesheet">
-      <script src="/hostedPlugin/dit_theia_postgres/resources/tabulator.min.js"></script>
-      <style nonce="${nonce}">
-        body,
-        html {
-          margin: 0;
-          padding: 0;
-          height: 100%;
-        }
-      </style>
+      <meta http-equiv="content-security-policy" content="default-src 'none'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'">
+      <link href="/hostedPlugin/dit_theia_postgres/resources/results.css" rel="stylesheet">
+      <script src="/hostedPlugin/dit_theia_postgres/resources/clusterize.js"></script>
     </head>
     <body class="vscode-body">
-      <div id="results-table"></div>
-      <script nonce="${nonce}">
-        // Avoid multiple additions of data
-        const Queue = (concurrency) => {
-          var running = 0;
-          const tasks = [];
-
-          return async (task) => {
-            tasks.push(task);
-            if (running >= concurrency) return;
-
-            ++running;
-            while (tasks.length) {
-                try {
-                    await tasks.shift()();
-                } catch(err) {
-                    console.error(err);
-                }
-            }
-            --running;
-          }
-        }
-        var queue = Queue(1);
-        const vscode = acquireVsCodeApi();
-
-        var state = vscode.getState({panelId: "${panelId}"});
-        if (state) {
-          // If we have a state, request the server to re-send the data
-          vscode.postMessage({
-            command: 'restore',
-          });
-        } else {
-          // If no state, save the state so it will be available to be restored
-          vscode.setState({panelId: "${panelId}"});
-        }
-
-        var table;
-        var allData = [];
-        window.addEventListener('message', event => {
-          queue(async () => {
-            const message = event.data;
-
-            if (message.summary) {
-              var tableEl = document.getElementById('results-table');
-              tableEl.innerHTML = message.summary;
-              tableEl.classList.add('error');
-            }
-
-            if (message.fields.length) {
-              // Tabulator has an addData method, but is very slow
-              if (!table) {
-                table = new Tabulator("#results-table", {
-                  height: "100%",
-                  columns: [{formatter:"rownum", align:"right", width:40}].concat(message.fields.map((field) => {
-                    return {title:field.name, field: field.index, headerSort:false};
-                  })),
-                  data: []
-                });
-              }
-              allData = allData.concat(message.rows);
-              const renderInPosition = true;
-              await table.rowManager.setData(allData, renderInPosition);
-            }
-          });
-        });
-      </script>
+      <div id="results" class="results"></div>
+      <script src="/hostedPlugin/dit_theia_postgres/resources/results.js"></script>
     </body>
   </html>`;
 }

@@ -9,18 +9,6 @@
 }('Clusterize', function() {
   "use strict"
 
-  // detect ie9 and lower
-  // https://gist.github.com/padolsey/527683#comment-786682
-  var ie = (function(){
-    for( var v = 3,
-             el = document.createElement('b'),
-             all = el.all || [];
-         el.innerHTML = '<!--[if gt IE ' + (++v) + ']><i><![endif]-->',
-         all[0];
-       ){}
-    return v > 4 ? v : document.documentMode;
-  }()),
-  is_mac = navigator.platform.toLowerCase().indexOf('mac') + 1;
   var Clusterize = function(data) {
     if( ! (this instanceof Clusterize))
       return new Clusterize(data);
@@ -155,7 +143,6 @@
       var opts = this.options;
       opts.content_tag = this.content_elem.tagName.toLowerCase();
       if( ! rows.length) return;
-      if(ie && ie <= 9 && ! opts.tag) opts.tag = rows[0].match(/<([^>\s/]*)/)[1].toLowerCase();
       if(this.content_elem.children.length <= 1) cache.data = this.html(rows[0] + rows[0] + rows[0]);
       if( ! opts.tag) opts.tag = this.content_elem.children[0].tagName.toLowerCase();
       this.getRowsHeight(rows);
@@ -273,22 +260,8 @@
         this.content_elem.lastChild.style.height = data.bottom_offset + 'px';
       }
     },
-    // unfortunately ie <= 9 does not allow to use innerHTML for table elements, so make a workaround
     html: function(data) {
-      var content_elem = this.content_elem;
-      if(ie && ie <= 9 && this.options.tag == 'tr') {
-        var div = document.createElement('div'), last;
-        div.innerHTML = '<table><tbody>' + data + '</tbody></table>';
-        while((last = content_elem.lastChild)) {
-          content_elem.removeChild(last);
-        }
-        var rows_nodes = this.getChildNodes(div.firstChild.firstChild);
-        while (rows_nodes.length) {
-          content_elem.appendChild(rows_nodes.shift());
-        }
-      } else {
-        content_elem.innerHTML = data;
-      }
+      this.content_elem.innerHTML = data;
     },
     getChildNodes: function(tag) {
         var child_nodes = tag.children, nodes = [];

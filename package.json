@@ -207,5 +207,9 @@
     "pg-cursor": "^2.3.0",
     "vscode-languageclient": "^4.4.2",
     "vscode-languageserver": "^4.4.2"
+  },
+  "resolutions": {
+    "**/bl": "^4.0.3",
+    "**/y18n": "^5.0.8"
   }
 }

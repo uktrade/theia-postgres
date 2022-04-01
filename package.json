@@ -25,7 +25,7 @@
     "src"
   ],
   "theiaPlugin": {
-    "backend": "lib/extension.js"   
+    "backend": "lib/extension.js"
   },
   "contributes": {
     "languages": [
@@ -189,13 +189,13 @@
     "build": "yarn run format-code && yarn run compile && theia-plugin pack"
   },
   "devDependencies": {
+    "@theia/plugin": "latest",
+    "@theia/plugin-packager": "latest",
     "@types/csv-stringify": "^1.4.2",
     "@types/keytar": "^4.0.1",
     "@types/mocha": "^2.2.42",
     "@types/node": "^14.0.14",
     "@types/pg": "^7.14.4",
-    "@theia/plugin": "latest",
-    "@theia/plugin-packager": "latest",
     "rimraf": "2.6.2",
     "typescript": "^3.9.6",
     "typescript-formatter": "7.2.2",
@@ -214,6 +214,7 @@
     "**/mem": "^4.0.0",
     "**/minimist": "~1.2.3",
     "**/yargs-parser": "~18.1.2",
+    "ansi-regex": "^3.0.1",
     "set-value": "^4.0.1"
   }
 }

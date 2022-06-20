@@ -202,6 +202,7 @@
     "vscode": "^1.1.30"
   },
   "dependencies": {
+    "async": "^2.6.4",
     "csv-stringify": "^3.1.1",
     "pg": "^8.3.0",
     "pg-cursor": "^2.3.0",
@@ -216,6 +217,6 @@
     "**/yargs-parser": "~18.1.2",
     "ansi-regex": "^3.0.1",
     "set-value": "^4.0.1",
-    "async" : "^2.6.4"
+    "async": "^2.6.4"
   }
 }

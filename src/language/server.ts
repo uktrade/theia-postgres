@@ -156,7 +156,7 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
           schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
           AND schemaname not like 'pg_temp_%'
           AND schemaname not like 'pg_toast_temp_%'
-          AND has_schema_privilege(quote_ident(schemaname), 'CREATE, USAGE') = true
+          AND has_schema_privilege(schemaname, 'CREATE, USAGE') = true
           AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
         union all
         SELECT
@@ -169,7 +169,7 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
           schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
           AND schemaname not like 'pg_temp_%'
           AND schemaname not like 'pg_toast_temp_%'
-          AND has_schema_privilege(quote_ident(schemaname), 'CREATE, USAGE') = true
+          AND has_schema_privilege(schemaname, 'CREATE, USAGE') = true
           AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
       ) as tbl
       LEFT JOIN (
@@ -206,7 +206,7 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
     WHERE n.nspname <> 'information_schema'
       AND pg_catalog.pg_function_is_visible(p.oid)
       AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype
-      AND has_schema_privilege(quote_ident(n.nspname), 'USAGE') = true
+      AND has_schema_privilege(n.nspname, 'USAGE') = true
       AND has_function_privilege(p.oid, 'execute') = true
     ORDER BY 1, 2, 4;`);
 

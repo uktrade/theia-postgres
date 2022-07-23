@@ -142,7 +142,7 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
       tbl.tablename,
       tbl.quoted_name,
       tbl.is_table,
-      json_agg(a) as columns
+      COALESCE(json_agg(a) FILTER (WHERE a IS NOT NULL), '[]') as columns
     FROM
       (
         SELECT

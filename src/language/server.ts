@@ -1,10 +1,12 @@
 import {
-  IPCMessageReader, IPCMessageWriter, createConnection, IConnection,
-  TextDocuments, TextDocument, InitializeResult,
+  IPCMessageReader, IPCMessageWriter, createConnection, Connection,
+  TextDocuments, InitializeResult,
   Diagnostic, DiagnosticSeverity, TextDocumentPositionParams,
   CompletionItem, CompletionItemKind,
-  SignatureHelp, SignatureInformation, ParameterInformation
-} from 'vscode-languageserver';
+  SignatureHelp, SignatureInformation, ParameterInformation,
+  TextDocumentSyncKind
+} from 'vscode-languageserver/node';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Client, ClientConfig } from 'pg';
 import * as fs from 'fs';
 import { Validator } from './validator';
@@ -80,12 +82,12 @@ export interface FieldCompletionItem extends CompletionItem {
  * 3. F5
   */
 
-let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
+let connection: Connection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
 
-let documents: TextDocuments = new TextDocuments();
+let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
 documents.listen(connection);
 
 let shouldSendDiagnosticRelatedInformation: boolean = false;
@@ -94,7 +96,7 @@ connection.onInitialize((_params): InitializeResult => {
   shouldSendDiagnosticRelatedInformation = _params.capabilities && _params.capabilities.textDocument && _params.capabilities.textDocument.publishDiagnostics && _params.capabilities.textDocument.publishDiagnostics.relatedInformation;
   return {
     capabilities: {
-      textDocumentSync: documents.syncKind,
+      textDocumentSync: TextDocumentSyncKind.Full,
       completionProvider: {
         triggerCharacters: [' ', '.', '"']
       },

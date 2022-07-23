@@ -13,7 +13,7 @@
     "theia-plugin"
   ],
   "engines": {
-    "theiaPlugin": "next"
+    "theiaPlugin": "latest"
   },
   "categories": [
     "Other"
@@ -194,28 +194,19 @@
     "@types/csv-stringify": "^1.4.2",
     "@types/keytar": "^4.0.1",
     "@types/mocha": "^2.2.42",
-    "@types/node": "^14.0.14",
+    "@types/node": "^16.11.7",
     "@types/pg": "^7.14.4",
-    "rimraf": "2.6.2",
-    "typescript": "^3.9.6",
-    "typescript-formatter": "7.2.2",
-    "vscode": "^1.1.30"
+    "@types/vscode": "^1.69.0",
+    "rimraf": "3.0.2",
+    "typescript": "^4.7.4",
+    "typescript-formatter": "7.2.2"
   },
   "dependencies": {
     "csv-stringify": "^3.1.1",
     "pg": "^8.3.0",
     "pg-cursor": "^2.3.0",
-    "vscode-languageclient": "^4.4.2",
-    "vscode-languageserver": "^4.4.2"
-  },
-  "resolutions": {
-    "**/bl": "^4.0.3",
-    "**/y18n": "^5.0.8",
-    "**/mem": "^4.0.0",
-    "**/minimist": "~1.2.3",
-    "**/yargs-parser": "~18.1.2",
-    "ansi-regex": "^3.0.1",
-    "set-value": "^4.0.1",
-    "async": "^2.6.4"
+    "vscode-languageclient": "^7.0.0",
+    "vscode-languageserver": "^7.0.0",
+    "vscode-languageserver-textdocument": "^1.0.1"
   }
 }

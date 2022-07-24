@@ -2,6 +2,12 @@
 
 Theia plugin for exploring a PostgreSQL database, allow queries to be entered, run, and results saved. Forked from [Borvik's vscode-postgres](https://github.com/Borvik/vscode-postgres).
 
+ 
+
+https://user-images.githubusercontent.com/13877/180649549-74a6c535-56e9-4339-9cff-dee9280106ea.mov
+
+
+
 
 ## Building
 

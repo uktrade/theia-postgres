@@ -156,8 +156,8 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
           schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
           AND schemaname not like 'pg_temp_%'
           AND schemaname not like 'pg_toast_temp_%'
-          AND has_schema_privilege(schemaname, 'CREATE, USAGE') = true
-          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+          AND has_schema_privilege(schemaname, 'USAGE') = true
+          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(tablename), 'SELECT') = true
         union all
         SELECT
           schemaname,
@@ -169,8 +169,8 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
           schemaname not in ('information_schema', 'pg_catalog', 'pg_toast')
           AND schemaname not like 'pg_temp_%'
           AND schemaname not like 'pg_toast_temp_%'
-          AND has_schema_privilege(schemaname, 'CREATE, USAGE') = true
-          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') = true
+          AND has_schema_privilege(schemaname, 'USAGE') = true
+          AND has_table_privilege(quote_ident(schemaname) || '.' || quote_ident(viewname), 'SELECT') = true
       ) as tbl
       LEFT JOIN (
         SELECT
@@ -185,7 +185,6 @@ async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<
         a.attrelid = tbl.quoted_name::regclass
         AND a.attnum > 0
         AND NOT a.attisdropped
-        AND has_column_privilege(tbl.quoted_name, a.attname, 'SELECT, INSERT, UPDATE, REFERENCES')
       )
     GROUP BY schemaname, tablename, quoted_name, is_table;`)).rows;
 

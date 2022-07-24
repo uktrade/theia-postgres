@@ -453,22 +453,24 @@ async function setupDBConnection(): Promise<void> {
           kind: table.is_table ? CompletionItemKind.Class : CompletionItemKind.Interface,
           insertText: table.schemaname == "public" ? table.tablename : table.schemaname + "." + table.tablename
         });
-        table.columns.forEach(field => {
-          let foundItem = items.find(i => i.label === field.attname && i.kind === CompletionItemKind.Field && i.detail === field.data_type);
-          if (foundItem) {
-            foundItem.tables.push(table.tablename);
-            foundItem.tables.sort();
-            foundItem.documentation = foundItem.tables.join(', ');
-          } else {
-            items.push({
-              label: field.attname,
-              kind: CompletionItemKind.Field,
-              detail: field.data_type,
-              documentation: table.tablename,
-              tables: [table.tablename]
-            });
-          }
-        });
+        // This is too slow for high numbers of columns in a database, to the point of blocking
+        // the event loop for things like parallel requets for diagnostics
+        // table.columns.forEach(field => {
+        //   let foundItem = items.find(i => i.label === field.attname && i.kind === CompletionItemKind.Field && i.detail === field.data_type);
+        //   if (foundItem) {
+        //     foundItem.tables.push(table.tablename);
+        //     foundItem.tables.sort();
+        //     foundItem.documentation = foundItem.tables.join(', ');
+        //   } else {
+        //     items.push({
+        //       label: field.attname,
+        //       kind: CompletionItemKind.Field,
+        //       detail: field.data_type,
+        //       documentation: table.tablename,
+        //       tables: [table.tablename]
+        //     });
+        //   }
+        // });
       });
       functionCache.forEach(fn => {
         items.push({

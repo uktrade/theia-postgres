@@ -18,4 +18,13 @@ The build step creates a file `theia-postgres.theia`. This should be copied into
 
 ## Usage
 
-Theia must be started with an environment variable `DATABASE_DSN__datasets_1` containing connection details in the format `host=myhost.com port=1234 ssl=require database=mydatabase user=myuser password=mypassword`. Each component is required.
+Theia must be started with [libpq environment variables](https://www.postgresql.org/docs/current/libpq-envars.html) containing credentials for the database. For example:
+
+```
+PGHOST=localhost \
+PGPORT=5432 \
+PGDATABASE=postgres \
+PGUSER=postgres \
+PGPASSWORD=password \
+    yarn theia start
+```

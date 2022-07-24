@@ -1,9 +1,8 @@
 import * as path from 'path';
 import * as theia from '@theia/plugin';
 import { LanguageClient, ServerOptions, TransportKind, LanguageClientOptions } from 'vscode-languageclient/node';
-import { IConnectionConfig } from '../types';
 
-export async function setupPostgresLanguageClient(context: theia.PluginContext, connectionConfig: IConnectionConfig) {
+export async function setupPostgresLanguageClient(context: theia.PluginContext) {
   const serverModule = context.asAbsolutePath(path.join('lib', 'language', 'server.js'));
   const debugOptions = { execArgv: ['--nolazy', '--debug=6005', '--inspect'] };
 
@@ -22,5 +21,5 @@ export async function setupPostgresLanguageClient(context: theia.PluginContext, 
   const client = new LanguageClient('postgres', 'PostgreSQL Service', serverOptions, clientOptions);
   context.subscriptions.push(client.start());
   await client.onReady();
-  client.sendRequest('set_connection', { connectionConfig });
+  client.sendRequest('set_connection');
 }

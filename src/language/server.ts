@@ -10,12 +10,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Client, ClientConfig } from 'pg';
 import * as fs from 'fs';
 import { Validator } from './validator';
-import { IConnectionConfig } from '../types';
 import { BackwardIterator } from './backwordIterator';
-
-export interface ISetConnection {
-  connectionConfig: IConnectionConfig;
-}
 
 export interface ExplainResults {
   rowCount: number;
@@ -114,16 +109,16 @@ o.`Y8b 88""     88   Y8   8P 88"""       8I  dY 88""Yb     Yb       dP__Yb  Yb  
 8bodP' 888888   88   `YbodP' 88         8888Y"  88oodP      YboodP dP""""Yb  YboodP 88  88 888888 
 */
 
-connection.onRequest('set_connection', async function(newConnection: ISetConnection) {
+connection.onRequest('set_connection', async function() {
   try {
-    await setupDBConnection(newConnection.connectionConfig)
+    await setupDBConnection()
   } catch (err) {
     console.log(err.message)
   }
 });
 
-async function setupDBConnection(connectionOptions: IConnectionConfig): Promise<void> {
-  const dbConnection = new Client(connectionOptions);
+async function setupDBConnection(): Promise<void> {
+  const dbConnection = new Client();
   await dbConnection.connect();
 
   const schemaCache = (await dbConnection.query(`

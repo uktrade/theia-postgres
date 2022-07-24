@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import {
   IPCMessageReader, IPCMessageWriter, createConnection, Connection,
   TextDocuments, InitializeResult,
@@ -8,7 +10,6 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Client, ClientConfig } from 'pg';
-import * as fs from 'fs';
 import { Validator } from './validator';
 import { BackwardIterator } from './backwordIterator';
 
@@ -118,7 +119,18 @@ connection.onRequest('set_connection', async function() {
 });
 
 async function setupDBConnection(): Promise<void> {
-  const dbConnection = new Client();
+  // node-postgresql almost supports all libpq environment variables, but
+  // not the PGSSL* ones, presumably to be able to pass in certs and keys
+  // as strings
+  const pgSSLMode = process.env.PGSSLMODE || 'verify-full';
+  const dbConnection = new Client({
+    ssl: pgSSLMode == 'disable' ? false : {
+      rejectUnauthorized: ['verify-ca', 'verify-full'].includes(pgSSLMode),
+      ca: process.env.PGSSLROOTCERT ? readFileSync(process.env.PGSSLROOTCERT).toString() : undefined,
+      key: process.env.PGSSLKEY ? readFileSync(process.env.PGSSLKEY).toString() : undefined,
+      cert: process.env.PGSSLCERT ? readFileSync(process.env.PGSSLCERT).toString() : undefined,
+    }
+  });
   await dbConnection.connect();
 
   const schemaCache = (await dbConnection.query(`

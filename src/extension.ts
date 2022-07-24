@@ -3,6 +3,7 @@ import { setupPostgresLanguageClient } from './language/client';
 import { PostgreSQLTreeDataProvider } from './tree';
 import { getRunQueryAndDisplayResults } from './results';
 
+import { readFileSync } from 'node:fs';
 import { Pool } from 'pg';
 
 import { getNewQueryCommand } from './commands/newQuery';
@@ -12,8 +13,18 @@ import { getSaveResultCommand } from './commands/saveResult';
 import { getSelectTopCommand } from './commands/selectTop';
 
 export async function start(context: theia.PluginContext) {
-  const credentials = process.env['DATABASE_DSN__datasets_1']!;
-  const pool = new Pool();
+  // node-postgresql almost supports all libpq environment variables, but
+  // not the PGSSL* ones, presumably to be able to pass in certs and keys
+  // as strings
+  const pgSSLMode = process.env.PGSSLMODE || 'verify-full';
+  const pool = new Pool({
+    ssl: pgSSLMode == 'disable' ? false : {
+      rejectUnauthorized: ['verify-ca', 'verify-full'].includes(pgSSLMode),
+      ca: process.env.PGSSLROOTCERT ? readFileSync(process.env.PGSSLROOTCERT).toString() : undefined,
+      key: process.env.PGSSLKEY ? readFileSync(process.env.PGSSLKEY).toString() : undefined,
+      cert: process.env.PGSSLCERT ? readFileSync(process.env.PGSSLCERT).toString() : undefined,
+    }
+  });
 
   const tree = new PostgreSQLTreeDataProvider(pool);
   context.subscriptions.push(theia.window.registerTreeDataProvider('postgres', tree));

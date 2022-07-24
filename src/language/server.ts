@@ -9,7 +9,7 @@ import {
   TextDocumentSyncKind
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Client, ClientConfig } from 'pg';
+import { Pool } from 'pg';
 import { Validator } from './validator';
 import { BackwardIterator } from './backwordIterator';
 
@@ -123,7 +123,7 @@ async function setupDBConnection(): Promise<void> {
   // not the PGSSL* ones, presumably to be able to pass in certs and keys
   // as strings
   const pgSSLMode = process.env.PGSSLMODE || 'verify-full';
-  const dbConnection = new Client({
+  const pool = new Pool({
     ssl: pgSSLMode == 'disable' ? false : {
       rejectUnauthorized: ['verify-ca', 'verify-full'].includes(pgSSLMode),
       ca: process.env.PGSSLROOTCERT ? readFileSync(process.env.PGSSLROOTCERT).toString() : undefined,
@@ -131,9 +131,17 @@ async function setupDBConnection(): Promise<void> {
       cert: process.env.PGSSLCERT ? readFileSync(process.env.PGSSLCERT).toString() : undefined,
     }
   });
-  await dbConnection.connect();
 
-  const schemaCache = (await dbConnection.query(`
+  async function query(sql: string) {
+    const client = await pool.connect()
+    try {
+      return (await client.query(sql));
+    } finally {
+      client.release()
+    }
+  }
+
+  const schemaCache = (await query(`
     SELECT nspname as name
     FROM pg_namespace
     WHERE
@@ -143,7 +151,7 @@ async function setupDBConnection(): Promise<void> {
       AND has_schema_privilege(oid, 'CREATE, USAGE')
     ORDER BY nspname;`)).rows;
 
-  const tableCache = (await dbConnection.query(`
+  const tableCache = (await query(`
     SELECT
       tbl.schemaname,
       tbl.tablename,
@@ -195,7 +203,7 @@ async function setupDBConnection(): Promise<void> {
       )
     GROUP BY schemaname, tablename, quoted_name, is_table;`)).rows;
 
-  let functions = await dbConnection.query(`SELECT n.nspname as "schema",
+  let functions = await query(`SELECT n.nspname as "schema",
       p.proname as "name",
       d.description,
       pg_catalog.pg_get_function_result(p.oid) as "result_type",
@@ -234,10 +242,10 @@ async function setupDBConnection(): Promise<void> {
     existing.overloads.push({ args, description: fn.description });
   });
 
-  let keywords = await dbConnection.query(`select * from pg_get_keywords();`);
+  let keywords = await query(`select * from pg_get_keywords();`);
   const keywordCache = keywords.rows.map<string>(rw => rw.word.toLocaleUpperCase());
 
-  const databaseCache = (await dbConnection.query(`
+  const databaseCache = (await query(`
     SELECT datname
     FROM pg_database
     WHERE
@@ -284,7 +292,7 @@ async function setupDBConnection(): Promise<void> {
         }
       }
       try {
-        const results = await dbConnection.query(`EXPLAIN ${sql.statement}`);
+        const results = await query(`EXPLAIN ${sql.statement}`);
       }
       catch (err) {
         // can use err.position (string)
